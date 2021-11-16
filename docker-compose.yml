@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+    mongodb:
+        build: ./DataBaseNOSQL/
+        container_name: mongodb
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: admin
+            MONGO_INITDB_DATABASE: mongodb
+        ports:
+            - 27017:27017
+        volumes:
+            - type: volume
+              source: mongodbData
+              target: /data/db
+volumes:
+    mongodbData:
