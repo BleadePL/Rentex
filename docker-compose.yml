@@ -11,8 +11,6 @@ services:
         ports:
             - 27017:27017
         volumes:
-            - type: volume
-              source: mongodbData
-              target: /data/db
+            - mongodbData:/data/db
 volumes:
     mongodbData:

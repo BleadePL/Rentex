@@ -13,7 +13,7 @@ db.createUser({
 db.createCollection( "Car", {
     validator: { $jsonSchema: {
        bsonType: "object",
-       required: [ "phone" ],
+       required: [ "brand","vin","regCountryCode","regNumber","modelName","passengerNumber","chargeLevel","mileage","currentLocationLatitude","currentLocationLongtitude","status","activationCost","kmCost","minCost","esimNumber","esimImei" ],
        properties: {
           brand: {
              bsonType : "string",
@@ -22,6 +22,7 @@ db.createCollection( "Car", {
           vin: {
             bsonType : "string",
             maxLength: 17,
+            unique: true
          },
          regCountryCode: {
             bsonType : "string",
@@ -35,10 +36,6 @@ db.createCollection( "Car", {
             bsonType : "string",
             maxLength: 50,
          },
-         regNumber: {
-            bsonType : "string",
-            maxLength: 10,
-         }, 
          passengerNumber: {
             bsonType : "int",
             minimum: 1,
@@ -86,11 +83,13 @@ db.createCollection( "Car", {
          },
          esimNumber: {
             bsonType: "String",
-            maxLength: 30
+            maxLength: 30,
+            unique: true,
          },
          esimImei: {
             bsonType: "String",
-            maxLength: 30
+            maxLength: 30,
+            unique: true,
          },
        }
     } }
@@ -99,17 +98,17 @@ db.createCollection( "Car", {
  db.createCollection( "Client", {
    validator: { $jsonSchema: {
       bsonType: "object",
-      required: [ "phone" ],
+      required: [ "pesel","name","surname","balance","login","password","email","accountType","activationCode","status"],
       properties: {
          pesel: {
             bsonType : "string",
             maxLength: 11,
          },
-         firstName: {
+         name: {
             bsonType : "string",
             maxLength: 30,
          },
-         surName: {
+         surname: {
             bsonType : "string",
             maxLength: 30,
          },
@@ -184,7 +183,7 @@ db.createCollection( "Car", {
 db.createCollection( "Location", {
    validator: { $jsonSchema: {
       bsonType: "object",
-      required: [ "phone" ],
+      required: [ "locationType", "locationName","locationAddress","leaveReward","locationLatitude","locationLongtitude"],
       properties: {
          locationType: {
             enum: ["STATION","CLEAN","SERVICE","SPECIAL_POINT","UNKNOWN"]
@@ -235,7 +234,7 @@ db.createCollection( "Reservation", {
 db.createCollection( "Rental", {
    validator: { $jsonSchema: {
       bsonType: "object",
-      required: [ "reservationStart", "reservationEnd", "reservationCost"],
+      required: [ "rentalStart", "rentalEnd", "rentalCost"],
       properties: {
          rentalStart: {
             bsonType: "date"
