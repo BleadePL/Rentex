@@ -1,7 +1,34 @@
-db.auth('root', 'admin')
+
+
+//dev accounts
+db.createUser(
+    {
+        user: "zgrate",
+        pwd: "haslo123",
+        roles: [ {role:"userAdminAnyDatabase", db: "admin"}]
+    }
+);
+
+db.createUser(
+    {
+        user: "bleade",
+        pwd: "123456",
+        roles: [ {role:"userAdminAnyDatabase", db: "admin"}]
+    }
+);
+
+db.createUser(
+    {
+        user: "konrad",
+        pwd: "123456",
+        roles: [ {role:"userAdminAnyDatabase", db: "admin"}]
+    }
+)
+
+//Backend account
 db.createUser({
-  user: 'root',
-  pwd: 'admin',
+  user: 'backend',
+  pwd: 'backendpwd',
   roles: [
     {
       role: 'readWrite',
@@ -9,6 +36,9 @@ db.createUser({
     },
   ],
 });
+db.auth('backend', 'backendpwd')
+
+
 
 db.createCollection( "Car", {
     validator: { $jsonSchema: {
