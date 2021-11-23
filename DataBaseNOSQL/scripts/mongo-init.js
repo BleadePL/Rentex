@@ -13,7 +13,7 @@ db.createUser({
 db.createCollection( "Car", {
     validator: { $jsonSchema: {
        bsonType: "object",
-       required: [ "brand","vin","regCountryCode","regNumber","modelName","passengerNumber","chargeLevel","mileage","currentLocationLatitude","currentLocationLongtitude","status","activationCost","kmCost","minCost","esimNumber","esimImei" ],
+       required: [ "brand","vin","regCountryCode","regNumber","modelName","passengerNumber","chargeLevel","mileage","currentLocationLat","currentLocationLong","status","activationCost","kmCost","minCost","esimNumber","esimImei" ],
        properties: {
           brand: {
              bsonType : "string",
@@ -52,11 +52,11 @@ db.createCollection( "Car", {
          mileage: {
             bsonType : "int"
          },
-         currentLocationLatitude: {
+         currentLocationLat: {
             bsonType: "string",
             maxLength: 20
          },
-         currentLocationLongtitude: {
+         currentLocationLong: {
             bsonType: "string",
             maxLength: 20
          },
@@ -98,17 +98,17 @@ db.createCollection( "Car", {
  db.createCollection( "Client", {
    validator: { $jsonSchema: {
       bsonType: "object",
-      required: [ "pesel","name","surname","balance","login","password","email","accountType","activationCode","status"],
+      required: [ "pesel","name","surname","balance","login","password","email","accountType","activationCode","status","role"],
       properties: {
          pesel: {
             bsonType : "string",
             maxLength: 11,
          },
-         name: {
+         surname: {
             bsonType : "string",
             maxLength: 30,
          },
-         surname: {
+         name: {
             bsonType : "string",
             maxLength: 30,
          },
@@ -116,18 +116,12 @@ db.createCollection( "Car", {
             bsonType : "string",
             maxLength: 255,
          },
-         driversLicence: {
-            bsonType: "object",
-            required: [ "driverLicenceNumber", "driverLicenceExpirationDate" ],
-            properties: {
-               driverLicenceNumber: {
+         driverLicenceNumber: {
                   bsonType: "string",
                   maxLength: 15
-               },
-               driverLicenceExpirationDate: {
+         },
+         driverLicenceExpirationDate: {
                   bsonType: "date",
-               }
-            }
          },
          balance: {
             bsonType : "string",
@@ -155,27 +149,9 @@ db.createCollection( "Car", {
          status: {
             enum: ["ACTIVE","INACTIVE","DOCUMENTS","PENDING","PAYMENT","ADMIN","LOCKED","DELETED"]
          },
-         creditCard: {
-            bsonType: "object",
-            required: [ "cardNumber", "expirationDate", "cardHholderName", "cardHolderAddress"],
-            properties: {
-               cardNumber: {
-                  bsonType: "string",
-                  maxLength: 16
-               },
-               expirationDate: {
-                  bsonType: "date",
-               },
-               cardHholderName: {
-                  bsonType: "string",
-                  maxLength: 60
-               },
-               cardHolderAddress: {
-                  bsonType: "string",
-                  maxLength: 255
-               },
-            }
-         },
+         role:{
+            enum: ["SERWISANT", "ADMIN", "CLIENT"]
+         }
       }
    } }
 } )
@@ -183,7 +159,7 @@ db.createCollection( "Car", {
 db.createCollection( "Location", {
    validator: { $jsonSchema: {
       bsonType: "object",
-      required: [ "locationType", "locationName","locationAddress","leaveReward","locationLatitude","locationLongtitude"],
+      required: [ "locationType", "locationName","locationAddress","leaveReward","locationLat","locationLong"],
       properties: {
          locationType: {
             enum: ["STATION","CLEAN","SERVICE","SPECIAL_POINT","UNKNOWN"]
@@ -200,11 +176,11 @@ db.createCollection( "Location", {
             bsonType: "string",
             maxLength: 20
          },
-         locationLatitude: {
+         locationLat: {
             bsonType: "string",
             maxLength: 20
          },
-         locationLongtitude: {
+         locationLong: {
             bsonType: "string",
             maxLength: 20
          },
@@ -246,7 +222,7 @@ db.createCollection( "Rental", {
             bsonType: "string",
             maxLength: 20
          },
-         cost: {
+         totalCost: {
             bsonType: "string",
             maxLength: 20
          },
@@ -255,4 +231,28 @@ db.createCollection( "Rental", {
          }
       }
    } }
+} )
+db.createCollection( "creditCard", {
+   validator: { $jsonSchema: {
+      bsonType: "object",
+      required: [ "cardNumber", "expirationDate", "cardHholderName", "cardHolderAddress"],
+      properties: {
+         cardNumber: {
+            bsonType: "string",
+            maxLength: 16
+         },
+         expirationDate: {
+            bsonType: "date",
+         },
+         cardHolderName: {
+            bsonType: "string",
+            maxLength: 60
+         },
+         cardHolderAddress: {
+            bsonType: "string",
+            maxLength: 255
+         },
+      }
+   } }
+   
 } )
