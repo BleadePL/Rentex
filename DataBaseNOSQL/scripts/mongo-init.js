@@ -147,7 +147,7 @@ db.createCollection( "Car", {
             maxLength: 64,
          },
          status: {
-            enum: ["ACTIVE","INACTIVE","DOCUMENTS","PENDING","PAYMENT","ADMIN","LOCKED","DELETED"]
+            enum: ["ACTIVE","INACTIVE","DOCUMENTS","PENDING","PAYMENT","LOCKED","DELETED"]
          },
          role:{
             enum: ["SERWISANT", "ADMIN", "CLIENT"]
