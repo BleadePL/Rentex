@@ -239,7 +239,7 @@ db.createCollection( "Rental", {
 db.createCollection( "CreditCard", {
     validator: { $jsonSchema: {
             bsonType: "object",
-            required: [ "cardNumber", "expirationDate", "cardHholderName", "cardHolderAddress"],
+            required: [ "cardNumber", "expirationDate", "cardHolderName", "cardHolderAddress"],
             properties: {
                 cardNumber: {
                     bsonType: "string"
