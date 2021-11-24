@@ -1,0 +1,3270 @@
+openapi: 3.0.1
+info:
+  title: Wypożyczalnia Aut - API
+  description: API do obsługi wypożyczalni
+  version: "1.0"
+servers:
+  - url: http://localhost:5000/
+tags:
+  - name: login
+    description: Logowanie i rejestracja
+  - name: user
+    description: Zarzadza uzytkownikiem
+  - name: browse
+    description: Przeglada listę aut i lokalizacji
+  - name: rent
+    description: Zarządza wypozyczaniem
+  - name: admin
+    description: Admin endpoint
+paths:
+  /login/login:
+    post:
+      tags:
+        - login
+      summary: Loguje do systemu
+      description: Loguje uzytkownka do systemu
+      operationId: login_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/login_login_body'
+      responses:
+        "200":
+          description: Token sesji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "400":
+          description: Niewlasciwe haslo lub login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /login/register:
+    post:
+      tags:
+        - login
+      summary: Rejestruje uzytkownika do systemu
+      description: Rejestruje uzytkownika do systemu
+      operationId: login_register_post
+      requestBody:
+        description: Registration data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterData'
+        required: true
+      responses:
+        "201":
+          description: Zarejestrowano! Wyslij teraz /sendtoken po token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: "Wystapil blad! Kod bledu \n1 - mail juz uzyty, \n2 - niewlasciwy\
+            \ mail, \n3 - login zajety, \n4 - przeprowadz walidacje jeszcze raz, \n\
+            5 - inny blad"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /login/sendToken:
+    post:
+      tags:
+        - login
+      summary: Wysyla token aktywacyjny
+      operationId: login_send_token_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Token wyslany na maila!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Poczekaj 2 min! za szybko!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /login/status:
+    get:
+      tags:
+        - login
+      summary: Pobierz status konta
+      operationId: login_status_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "400":
+          description: Blad argumentow!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400_1'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /login/activate:
+    post:
+      tags:
+        - login
+      summary: Aktywacja konta
+      description: Aktywuje konto w systemie
+      operationId: login_activate_post
+      parameters:
+        - name: activation_token
+          in: query
+          description: "Token aktywacyjny z maila, losowy pin 6 znakow "
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            example: "728340"
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "201":
+          description: Konto aktywowane!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Niewlasciwy token aktywacyjny!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /login/logout:
+    post:
+      tags:
+        - login
+      summary: Wyloguj z systemu
+      operationId: login_logout_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Wylogowano
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /login/uploadPhotos:
+    post:
+      tags:
+        - login
+      summary: Upload images!
+      operationId: login_upload_photos_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: side
+          in: query
+          description: "F jezeli przod, B jezeli tył"
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          image/*:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: Pomyslnie uploadowano!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Zdjecie juz zaladowane!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.login_controller
+  /user/details:
+    get:
+      tags:
+        - user
+      summary: Pobiera informacje o uzytkowniku
+      operationId: user_details_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Pomyslnie pobrano dane uzytkownika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /user/changepasswd:
+    post:
+      tags:
+        - user
+      summary: Zmien haslo
+      operationId: user_changepasswd_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user_changepasswd_body'
+      responses:
+        "200":
+          description: Haslo zmienione
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: "Wystapil blad, kod bledu"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400_2'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /user/updatelocation:
+    post:
+      tags:
+        - user
+      summary: Updates user location
+      operationId: user_updatelocation_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GPSLocation'
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /user/history:
+    get:
+      tags:
+        - user
+      summary: Zwraca historie wypozyczen
+      operationId: user_history_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+      responses:
+        "200":
+          description: Lista wypozyczen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rental'
+                x-content-type: application/json
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /user/cards:
+    get:
+      tags:
+        - user
+      summary: Lista kart przypisanych do konta
+      operationId: user_cards_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Lista kart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditCard'
+                x-content-type: application/json
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+    post:
+      tags:
+        - user
+      summary: Dodaj karte do konta
+      operationId: user_cards_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      requestBody:
+        description: Json Application with given schema
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user_cards_body'
+        required: true
+      responses:
+        "200":
+          description: Karta dodana
+          content:
+            application/json:
+              schema:
+                type: array
+                properties:
+                  cardId:
+                    type: integer
+                    description: ID karty
+                    example: 12491824091283
+                items:
+                  $ref: '#/components/schemas/CreditCard'
+                x-content-type: application/json
+        "400":
+          description: "Wystapil blad, kod bledu"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400_3'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+  /user/card/{id}:
+    get:
+      tags:
+        - user
+      summary: Info na temat konkretnej karty
+      operationId: user_card_id_get
+      parameters:
+        - name: id
+          in: path
+          description: Id karty
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Krta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+        "400":
+          description: niewlasciwy karty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.user_controller
+    delete:
+      tags:
+        - rent
+      summary: Usuwa karte z konta
+      operationId: user_card_id_delete
+      parameters:
+        - name: id
+          in: path
+          description: Id karty
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Karta usunieta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: niewlasciwe ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+  /browse/nearestcars:
+    get:
+      tags:
+        - browse
+      summary: Zwraca lokalizacje najblizszych aut
+      operationId: browse_nearestcars_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: locationLat
+          in: query
+          description: Szerokosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "51.312312"
+        - name: locationLong
+          in: query
+          description: Dlugosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "16.312312"
+        - name: distance
+          in: query
+          description: "Dystans w m, w jakim szukac. Wartosci wieksze od 2000m beda\
+          \ automatycznie zamieniane na 1km, mniejsze od 100m na 100m"
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 2000
+            minimum: 100
+            type: integer
+      responses:
+        "200":
+          description: Pomyslnie zwrocono auta!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_2'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.browse_controller
+  /browse/nearestlocations:
+    get:
+      tags:
+        - browse
+      summary: Zwraca liste najblizszych lokalizacji
+      operationId: browse_nearestlocations_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: locationLat
+          in: query
+          description: Szerokosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "51.312312"
+        - name: locationLong
+          in: query
+          description: Dlugosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "16.312312"
+        - name: distance
+          in: query
+          description: "Dystans w m, w jakim szukac. Wartosci wieksze od 2000m beda\
+          \ automatycznie zamieniane na 1km, mniejsze od 100m na 100m"
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 2000
+            minimum: 100
+            type: integer
+      responses:
+        "200":
+          description: Pomyslnie zwrocono lokalizacje!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.browse_controller
+  /browse/car/{id}:
+    get:
+      tags:
+        - browse
+      summary: Zwraca konkretne auto po ID
+      operationId: browse_car_id_get
+      parameters:
+        - name: id
+          in: path
+          description: Car ID
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Znaleziono Auto!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        "400":
+          description: Auto nie znalezione!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.browse_controller
+  /browse/location/{id}:
+    get:
+      tags:
+        - browse
+      summary: Zwraca konkretna lokalizacje po ID
+      operationId: browse_location_id_get
+      parameters:
+        - name: id
+          in: path
+          description: Location ID
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Znaleziono Lokacje!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        "400":
+          description: Lokacji nie znalezione!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.browse_controller
+  /rent/reservation/{id}:
+    get:
+      tags:
+        - rent
+      summary: Pobiera szczegoly rezerwacji
+      operationId: rent_reservation_id_get
+      parameters:
+        - name: id
+          in: path
+          description: Id rezerwacji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Dane rezerwacji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        "400":
+          description: Nie znaleziono rezerwacji!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+    delete:
+      tags:
+        - rent
+      summary: Zakoncza rezerwacje
+      operationId: rent_reservation_id_delete
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id rezerwacji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Anulowane rezerwację! ID jest juz niewazne!
+        "400":
+          description: "Blad w konczeniu rezerwacji! 1 - rezerwacja nie istnieje,\
+            \ 2 - rezerwacja juz zakonczona, 3 - nieznany blad"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400_4'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+  /rent/reservate:
+    post:
+      tags:
+        - rent
+      summary: Rezerwuje auto
+      operationId: rent_reservate_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: carId
+          in: query
+          description: Id auta
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Rezerwacja pomyslna! Zwraca ID Rezerwacji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_4'
+        "400":
+          description: "Rezerwacja nie powiodla się! Kod bledu: 1 - niewlasiwe auto,\
+            \ 2 - nie mozna wykonac rezerwacji"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400_5'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+  /rent/rent:
+    post:
+      tags:
+        - rent
+      summary: Wynajmuje auto
+      operationId: rent_rent_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rent_rent_body'
+        required: true
+      responses:
+        "200":
+          description: Pomyslnie wynajeto auto!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Blad wynajecia auta!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+  /rent/rent/{id}:
+    get:
+      tags:
+        - rent
+      summary: Pobiera wynajem auta
+      operationId: rent_rent_id_get
+      parameters:
+        - name: id
+          in: path
+          description: Id wynajmu
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Wynajem auta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rental'
+        "400":
+          description: niewlasciwy ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+    delete:
+      tags:
+        - rent
+      summary: Konczy wynajem auta
+      operationId: rent_rent_id_delete
+      parameters:
+        - name: id
+          in: path
+          description: Id wynajmu
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      responses:
+        "200":
+          description: Koniec wynajmu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: niewlasciwy ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.rent_controller
+  /admin/car:
+    get:
+      tags:
+        - admin
+      summary: Pobiera liste aut
+      operationId: admin_car_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: locationLat
+          in: query
+          description: Szerokosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "51.312312"
+        - name: locationLong
+          in: query
+          description: Dlugosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "16.312312"
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: distance
+          in: query
+          description: "Dystans w m, w jakim szukac. Wartosci wieksze od 2000m beda\
+          \ automatycznie zamieniane na 1km, mniejsze od 100m na 100m"
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 2000
+            minimum: 100
+            type: integer
+        - name: details
+          in: query
+          description: Szczegoly auta
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Lista aut
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_5'
+        "400":
+          description: "Ktorys argument jest niepoprawny. To jest api admina, nie\
+            \ ma znaczenia Ktory"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    post:
+      tags:
+        - admin
+      summary: Dodaje nowe auto
+      operationId: admin_car_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      requestBody:
+        description: "Ignorujcie parametry \"bez sensu\" np last used, last rental\
+          \ itp, nie chce mi sie tworzyc specjalnie scheme na to XD"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/admin_car_body'
+        required: true
+      responses:
+        "200":
+          description: Successfully added new car!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_6'
+        "400":
+          description: Car not added! Check arguments!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/car/{id}:
+    get:
+      tags:
+        - admin
+      summary: Pobiera szczegoly auta
+      operationId: admin_car_id_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id auta
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Auto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_7'
+        "400":
+          description: niewlasiwe ID auta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    delete:
+      tags:
+        - admin
+      summary: Usuwa auto z systemu
+      operationId: admin_car_id_delete
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id auta
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Usunieto auto!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Auto nie moze byc usuniete z jakiegos powodu!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    patch:
+      tags:
+        - admin
+      summary: Modyfikuje dane auta
+      operationId: admin_car_id_patch
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id auta
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      requestBody:
+        description: "Co zmienic? Dawac w Jsonie tylko te wartosci, ktore chcesz zmienic\
+          \ (oczywiskie niektorych rzeczy sie nie da, np modyfikowanie ID)"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/car_id_body'
+      responses:
+        "200":
+          description: Zmodyfikowano!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Nie udalo sie zmodyfikowac
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/car/{id}/rentalhistory:
+    get:
+      tags:
+        - admin
+      summary: Zwraca historie przejazdow
+      operationId: admin_car_id_rentalhistory_get
+      parameters:
+        - name: id
+          in: path
+          description: Id auta
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+      responses:
+        "200":
+          description: Historia przejazdow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_8'
+        "400":
+          description: Blad argumentow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/car/{id}/reservationhistory:
+    get:
+      tags:
+        - admin
+      summary: Zwraca historie rezerwacji
+      operationId: admin_car_id_reservationhistory_get
+      parameters:
+        - name: id
+          in: path
+          description: Id auta
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+      responses:
+        "200":
+          description: Historia rezerwacji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_9'
+        "400":
+          description: Blad argumentow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/user:
+    get:
+      tags:
+        - admin
+      summary: Zwraca liste uzytkownikow
+      operationId: admin_user_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+        - name: details
+          in: query
+          description: Szczegoly auta
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: boolean
+            default: false
+        - name: filter
+          in: query
+          description: Login lub imie lub nazwisko lub email usera
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: ""
+      responses:
+        "200":
+          description: Lista uzytkownikow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_10'
+        "400":
+          description: "Ktorys argument jest niepoprawny. To jest api admina, nie\
+            \ ma znaczenia Ktory"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/user/{id}:
+    get:
+      tags:
+        - admin
+      summary: Pobiera szczegoly uzytkownika
+      operationId: admin_user_id_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_11'
+        "400":
+          description: niewlasiwe ID usera
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    delete:
+      tags:
+        - admin
+      summary: Usuwa usera z systemu
+      operationId: admin_user_id_delete
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Usunieto usera!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: User nie moze byc usuniete z jakiegos powodu!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    patch:
+      tags:
+        - admin
+      summary: Modyfikuje dane usera
+      operationId: admin_user_id_patch
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      requestBody:
+        description: "Co zmienic? Dawac w Jsonie tylko te wartosci, ktore chcesz zmienic\
+          \ (oczywiskie niektorych rzeczy sie nie da, np modyfikowanie ID). Nie modyfikowac\
+          \ np aktywacji lub licencji, od tego jest inne api"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user_id_body'
+      responses:
+        "200":
+          description: Zmodyfikowano!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Nie udalo sie zmodyfikowac
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/user/{id}/activate:
+    post:
+      tags:
+        - admin
+      summary: Aktywuje konto usera
+      operationId: admin_user_id_activate_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Aktywowano!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Nie udalo sie Aktywowac/konto juz aktywne
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/user/{id}/documents:
+    get:
+      tags:
+        - admin
+      summary: Zwraca dokumenty uzytkownika w systemie
+      operationId: admin_user_id_documents_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: side
+          in: query
+          description: "F - przod, S - tyl"
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: F
+      responses:
+        "200":
+          description: Zdjecie
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+                x-content-type: image/png
+        "204":
+          description: No photo
+        "400":
+          description: Blad argumentow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    put:
+      tags:
+        - admin
+      summary: Potwierdza dokumety uzytkownika
+      operationId: admin_user_id_documents_put
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Potwierdzono dokumenty!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Nie udalo sie potwierdzic!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    delete:
+      tags:
+        - admin
+      summary: Odrzuca dokumenty uzytkowniika
+      operationId: admin_user_id_documents_delete
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Odrzucono dokumenty!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Nie udalo sie odrzucic!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/user/{id}/rentalhistory:
+    get:
+      tags:
+        - admin
+      summary: Zwraca historie przejazdow
+      operationId: admin_user_id_rentalhistory_get
+      parameters:
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+      responses:
+        "200":
+          description: Historia przejazdow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_8'
+        "400":
+          description: Blad argumentow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/user/{id}/reservationhistory:
+    get:
+      tags:
+        - admin
+      summary: Zwraca historie rezerwacji
+      operationId: admin_user_id_reservationhistory_get
+      parameters:
+        - name: id
+          in: path
+          description: Id usera
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+      responses:
+        "200":
+          description: Historia rezerwacji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_9'
+        "400":
+          description: Blad argumentow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/location:
+    get:
+      tags:
+        - admin
+      summary: Pobiera liste lokacji
+      operationId: admin_location_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: locationLat
+          in: query
+          description: Szerokosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "51.312312"
+        - name: locationLong
+          in: query
+          description: Dlugosc geograficzna
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "16.312312"
+        - name: pagelength
+          in: query
+          description: Number of records to return
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 20
+            minimum: 1
+            type: number
+            default: 5
+        - name: startindex
+          in: query
+          description: Start index for paging
+          required: false
+          style: form
+          explode: true
+          schema:
+            minimum: 0
+            type: number
+            default: 0
+        - name: distance
+          in: query
+          description: "Dystans w m, w jakim szukac. Wartosci wieksze od 2000m beda\
+          \ automatycznie zamieniane na 1km, mniejsze od 100m na 100m"
+          required: false
+          style: form
+          explode: true
+          schema:
+            maximum: 2000
+            minimum: 100
+            type: integer
+      responses:
+        "200":
+          description: Lista lokacji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_12'
+        "400":
+          description: "Ktorys argument jest niepoprawny. To jest api admina, nie\
+            \ ma znaczenia Ktory"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    post:
+      tags:
+        - admin
+      summary: Dodaje nową lokację
+      operationId: admin_location_post
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+      requestBody:
+        description: "Ignorujcie parametry \"bez sensu\" itp, nie chce mi sie tworzyc\
+          \ specjalnie scheme na to XD"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/admin_location_body'
+        required: true
+      responses:
+        "200":
+          description: Dodano nowa lokacje!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_13'
+        "400":
+          description: Lokacja nie dodana!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+  /admin/location/{id}:
+    get:
+      tags:
+        - admin
+      summary: Pobiera szczegoly lokacji
+      operationId: admin_location_id_get
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id lokacji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lokacja
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_14'
+        "400":
+          description: niewlasiwe ID Lokacji
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    delete:
+      tags:
+        - admin
+      summary: Usuwa lokacje z systemu
+      operationId: admin_location_id_delete
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id lokacji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Usunieto lokacje!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Lokacja nie moze byc usuniete z jakiegos powodu!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+    patch:
+      tags:
+        - admin
+      summary: Modyfikuje dane Lokacji
+      operationId: admin_location_id_patch
+      parameters:
+        - name: Session_Token
+          in: header
+          description: Token sesji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            example: 12943854693802
+          example: "1111111111111111"
+        - name: id
+          in: path
+          description: Id lokacji
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      requestBody:
+        description: "Co zmienic? Dawac w Jsonie tylko te wartosci, ktore chcesz zmienic\
+          \ (oczywiskie niektorych rzeczy sie nie da, np modyfikowanie ID)"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/location_id_body'
+      responses:
+        "200":
+          description: Zmodyfikowano!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "400":
+          description: Nie udalo sie zmodyfikowac
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+        "401":
+          description: Brak autoryzacji! Sprawdz token!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-openapi-router-controller: swagger_server.controllers.admin_controller
+components:
+  schemas:
+    Empty:
+      type: object
+      properties: { }
+      description: Pusty Json
+      example: { }
+    RegisterData:
+      type: object
+      properties:
+        name:
+          type: string
+          description: All names of the person
+          example: Fryderyk
+        surname:
+          type: string
+          example: Markowski
+        plec:
+          type: string
+          description: M(ale) or F(emale) or O(ther)
+          example: M
+        login:
+          type: string
+          example: FrydMark1
+        password:
+          type: string
+          example: Bcrypt(test)
+        address:
+          type: string
+          description: Adres w formacie NrDomuIMieszkania;ulica;kodpocztowy;miasto;kraj
+          example: 20;Sienkiewicza;60951;Tarnobrzeg;Polska
+        email:
+          type: string
+          example: FrydMark11@gmail.com
+        pesel:
+          type: string
+          description: Pesel
+          example: "60060535351"
+      description: Uzywany do przeslania danych do rejestracji
+    Car:
+      type: object
+      properties:
+        carId:
+          type: integer
+          description: ID auta
+          example: 1248530713
+        brand:
+          type: string
+          description: Nazwa marki auta
+          example: Toyota
+        regNumber:
+          type: string
+          description: Numer rejestracji
+          example: DW112233
+        model:
+          type: string
+          description: Model auta
+          example: Yaris 1.0
+        seats:
+          type: integer
+          description: Max Ilosc osob do przewozu
+          example: 5
+        charge:
+          type: integer
+          description: Ile procent naladowania
+          example: 100
+        distanceLeft:
+          type: integer
+          description: Jaki dystans autem jeszcze przejedzie w km?
+          example: 20
+        activationCost:
+          type: string
+          description: Poczatkowy koszt w PLN w formacie "PLN.GR"
+          example: "10.30"
+        kmCost:
+          type: string
+          description: Koszt jazdy 1 km w formacie 'PLN.GR'
+          example: "1.30"
+        timeCost:
+          type: string
+          description: Koszt jazdy 1 minuty w formacie 'PLN.GR'
+          example: "0.30"
+        locationLat:
+          type: string
+          description: Szerokosc geograficzna auta
+          example: "51.235123"
+        locationLong:
+          type: string
+          description: Dlugosc geograficzna auta
+          example: "16.50312"
+        status:
+          type: string
+          description: "ACTIVE - aktywny, RESERVED - zarezerwowany, INACTIVE - wył\
+            ączony z użycia, SERVICE - Serwisowany, INUSE - w uzyciu, UNKNOWN - nieznany\
+            \ stan"
+          example: ACTIVE
+      description: Opis auta
+      example:
+        locationLat: "51.235123"
+        charge: 100
+        distanceLeft: 20
+        seats: 5
+        carId: 1248530713
+        regNumber: DW112233
+        locationLong: "16.50312"
+        kmCost: "1.30"
+        model: Yaris 1.0
+        activationCost: "10.30"
+        timeCost: "0.30"
+        brand: Toyota
+        status: ACTIVE
+    CarDetails:
+      type: object
+      properties:
+        vin:
+          type: string
+          description: VIN
+          example: ASDSGFA123123123
+        lastUsed:
+          type: integer
+          description: Kiedy zostal ostatnio uzyty? (moze byc takze aktualne uzycie!)
+          example: 16123234234
+        lastRental:
+          type: integer
+          description: Numer ostatniego wynajecia
+        mileage:
+          type: integer
+          description: Ile ma przejechane w KM
+          example: 125123123
+        lastService:
+          type: integer
+          description: Ostatni serwis
+          example: 125123123
+        lastUpdate:
+          type: integer
+          description: Ostatni update lokalizacji
+          example: 125123123
+        lastReservation:
+          type: integer
+          description: Numer ostatniej reserwacji (Moze byc aktualnie zarezerwowany!)
+          example: 1238912093
+        esimPhoneNumber:
+          type: integer
+          description: Number telefonu karty sim w samochodzie
+          example: 125123123
+        eSimImei:
+          type: string
+          description: IMEI karty sim w samochodzie
+          example: "125123123"
+      example:
+        lastUsed: 16123234234
+        eSimImei: "125123123"
+        esimPhoneNumber: 125123123
+        lastReservation: 1238912093
+        lastUpdate: 125123123
+        vin: ASDSGFA123123123
+        lastRental: 0
+        lastService: 125123123
+        mileage: 125123123
+    Location:
+      type: object
+      properties:
+        locationId:
+          type: string
+          description: ID Lokalizacji
+          example: "124859018372309"
+        name:
+          type: string
+          description: Nazwa obiektu
+          example: Orlen
+        locationLat:
+          type: string
+          description: Szerokosc geograficzna
+          example: "52.3333"
+        locationLong:
+          type: string
+          description: Dlugosc geograficzna
+          example: "16.300"
+        locationType:
+          type: string
+          description: Typ obiektu
+          example: GAS_STATION
+        locationReward:
+          type: string
+          description: Nagroda za pozostawienie auta tutaj
+          example: "1.30"
+      description: Uzywany do przesylania danych o lokalizacji
+      example:
+        locationLat: "52.3333"
+        locationLong: "16.300"
+        locationId: "124859018372309"
+        name: Orlen
+        locationType: GAS_STATION
+        locationReward: "1.30"
+    Reservation:
+      type: object
+      properties:
+        reservationId:
+          type: integer
+          description: Id rezerwacji
+          example: 123124121322
+        reservationStart:
+          type: integer
+          description: Poczatek rezerwacji w unix time
+          example: 124529381639481
+        duration:
+          type: integer
+          description: Jak dlugo juz jest wypozyczony/byl wypozyczony?
+          example: 120
+        cardId:
+          type: integer
+          description: Zarezerwowane auto
+          example: 4451324
+      example:
+        duration: 120
+        reservationId: 123124121322
+        reservationStart: 124529381639481
+        cardId: 4451324
+    Rental:
+      type: object
+      properties:
+        rentalId:
+          type: integer
+          description: Id wynajecia
+          example: 12521334
+        carId:
+          type: integer
+          description: Id auta
+          example: 212419820
+        rentalStart:
+          type: integer
+          description: Czas rozpoczecia wynajecia
+          example: 124124123
+        rentalEnd:
+          type: integer
+          description: Czas zakonczenia wynajecia
+          example: 123128512084
+        rentalCost:
+          type: string
+          description: Koszt wynajecia
+          example: "12.3"
+        mileage:
+          type: integer
+          description: Ile metrów przejechał autem?
+          example: 1250812094812
+        ended:
+          type: boolean
+          description: Czy to wynajecie zostalo juz zakonczone?
+          example: true
+      example:
+        rentalCost: "12.3"
+        ended: true
+        rentalStart: 124124123
+        rentalId: 12521334
+        carId: 212419820
+        rentalEnd: 123128512084
+        mileage: 1250812094812
+    CreditCard:
+      type: object
+      properties:
+        lastdigits:
+          type: integer
+          description: ostatnie 4 cyfry karty
+          example: 1111
+        expiration:
+          type: string
+          description: data waznosci karty w formacie MM/YY
+          example: 10/21
+        holderName:
+          type: string
+          description: Imie i nazwisko właściciela karty
+          example: Adam Markowski
+      example:
+        holderName: Adam Markowski
+        expiration: 10/21
+        lastdigits: 1111
+    User:
+      type: object
+      properties:
+        login:
+          type: string
+          description: Login uzytkownika
+          example: FrydMark1
+        email:
+          type: string
+          description: Email uzytkownika
+          example: FrydMark1
+        name:
+          type: string
+          description: Imie
+          example: Fryderyk
+        surname:
+          type: string
+          description: Nazwisko
+          example: Markowski
+        accountType:
+          type: string
+          description: "PERSONAL - osoba prywatna, COMPANY - firma, ORGANISATION -\
+            \ organizacja, UNKNOWN - Inne"
+          example: PERSONAL
+        status:
+          type: string
+          description: "ACTIVE - Aktywne konto, INACTIVE - nieaktwyne konto, DOCUMENTS\
+            \ - Brak dokumentow, PENDING - wyslano dokumenty, oczekiwanie na potwierdzenie,\
+            \ PAYMENT - Brak srodkow na koncie, LOCKED - konto zablokowane, DELETED\
+            \ - konto usuniete"
+          example: ACTIVE
+        balance:
+          type: string
+          description: stan konta w PLN.GR
+          example: "20.30"
+      example:
+        balance: "20.30"
+        surname: Markowski
+        accountType: PERSONAL
+        name: Fryderyk
+        login: FrydMark1
+        email: FrydMark1
+        status: ACTIVE
+    UserDetails:
+      type: object
+      properties:
+        pesel:
+          type: string
+          description: Pesel uzytkownika
+          example: "12381294819283"
+        driverLicenceNumber:
+          type: string
+          description: Numer prawa jazdy
+        driverLicenceExpirationDate:
+          type: string
+          description: Data waznosci licencji
+        lastRental:
+          type: integer
+          description: Ostatni wynajem (moze byc aktualnie)
+        lastReservation:
+          type: integer
+          description: Ostatnia rezerwacja
+        role:
+          type: string
+          description: "Rola w systemie. Null jezeli brak roli, ADMIN, SERVICE"
+      example:
+        driverLicenceExpirationDate: driverLicenceExpirationDate
+        role: role
+        lastReservation: 6
+        pesel: "12381294819283"
+        driverLicenceNumber: driverLicenceNumber
+        lastRental: 0
+    GPSLocation:
+      type: object
+      properties:
+        locationLat:
+          type: string
+          description: Szerokosc geograficzna
+          example: "51.312312"
+        locationLong:
+          type: string
+          description: Dlugosc geograficzna
+          example: "16.3123123"
+    login_login_body:
+      type: object
+      properties:
+        login:
+          type: string
+          description: Login
+          example: TEstasdasd
+        password:
+          type: string
+          description: "Hasło, zahashowane bCryptem"
+    inline_response_200:
+      type: object
+      properties:
+        token:
+          $ref: '#/components/parameters/SessionToken'
+      example:
+        token: "{}"
+    inline_response_400:
+      type: object
+      properties:
+        error:
+          type: integer
+          description: "Kod bledu \n1 - mail juz uzyty, \n2 - niewlasciwy mail, \n\
+            3 - login zajety, \n4 - przeprowadz walidacje jeszcze raz, \n5 - inny\
+            \ blad"
+          example: 1
+    inline_response_200_1:
+      type: object
+      properties:
+        status:
+          type: string
+          description: "ACTIVE - Aktywne konto, INACTIVE - nieaktwyne konto, DOCUMENTS\
+            \ - Brak dokumentow, PENDING - wyslano dokumenty, oczekiwanie na potwierdzenie,\
+            \ PAYMENT - Brak srodkow na koncie, ADMIN - administrator, LOCKED - konto\
+            \ zablokowane, DELETED - konto usuniete"
+          example: ACTIVE
+      example:
+        status: ACTIVE
+    inline_response_400_1:
+      type: object
+      properties:
+        error:
+          type: integer
+          description: "Konto nie gotowe. Kody bledu: 1 - konto nieaktwne, 2 - konto\
+            \ nie ma dokumentow, 3 - konto jest zablokowane, 4 - konto nie gotowe"
+          example: 1
+    user_changepasswd_body:
+      type: object
+      properties:
+        newPasswd:
+          type: string
+          description: "Nowe haslo, zakodowane bcryptem"
+        oldPasswd:
+          type: string
+          description: "Stare haslo, zakodowane bcryptem"
+    inline_response_400_2:
+      type: object
+      properties:
+        error:
+          type: string
+          description: "INVALID - niewlasciwe haslo, USED - haslo w uzyciu, NEWERROR\
+            \ - nowe haslo niepoprawne\""
+          example: INVALID
+    user_cards_body:
+      type: object
+      properties:
+        cardNumber:
+          type: integer
+          description: CardNumber
+          example: 123942385910283
+        expirationDate:
+          type: string
+          description: Data waznosci MM/YY
+          example: 10/22
+        cardHolder:
+          type: string
+          description: Wlasciciel karty
+          example: Jan Kowalski
+        cvv:
+          type: integer
+          description: CVV karty
+          example: 123
+        holderAddress:
+          type: string
+          description: Adress wlasciciela karty
+          example: "17 stycznia 24, 10-100 Warszawa, Polska"
+    inline_response_400_3:
+      type: object
+      properties:
+        error:
+          type: integer
+          description: "1 - blad autoryzacji karty, 2 - blad przetwarzania transakcji,\
+            \ 3 - inny blad"
+          example: 1
+    inline_response_200_2:
+      type: object
+      properties:
+        cars:
+          type: array
+          items:
+            $ref: '#/components/schemas/Car'
+      example:
+        cars:
+          - locationLat: "51.235123"
+            charge: 100
+            distanceLeft: 20
+            seats: 5
+            carId: 1248530713
+            regNumber: DW112233
+            locationLong: "16.50312"
+            kmCost: "1.30"
+            model: Yaris 1.0
+            activationCost: "10.30"
+            timeCost: "0.30"
+            brand: Toyota
+            status: ACTIVE
+          - locationLat: "51.235123"
+            charge: 100
+            distanceLeft: 20
+            seats: 5
+            carId: 1248530713
+            regNumber: DW112233
+            locationLong: "16.50312"
+            kmCost: "1.30"
+            model: Yaris 1.0
+            activationCost: "10.30"
+            timeCost: "0.30"
+            brand: Toyota
+            status: ACTIVE
+    inline_response_200_3:
+      type: object
+      properties:
+        locations:
+          type: array
+          description: Location
+          items:
+            $ref: '#/components/schemas/Location'
+      example:
+        locations:
+          - locationLat: "52.3333"
+            locationLong: "16.300"
+            locationId: "124859018372309"
+            name: Orlen
+            locationType: GAS_STATION
+            locationReward: "1.30"
+          - locationLat: "52.3333"
+            locationLong: "16.300"
+            locationId: "124859018372309"
+            name: Orlen
+            locationType: GAS_STATION
+            locationReward: "1.30"
+    inline_response_400_4:
+      type: object
+      properties:
+        error:
+          type: integer
+          description: "Blad w konczeniu rezerwacji! 1 - rezerwacja nie istnieje,\
+            \ 2 - rezerwacja juz zakonczona, 3 - nieznany blad"
+          example: 1
+    inline_response_200_4:
+      type: object
+      properties:
+        resId:
+          type: integer
+          description: Id rezerwacji
+          example: 1231902451
+      example:
+        resId: 1231902451
+    inline_response_400_5:
+      type: object
+      properties:
+        error:
+          type: integer
+          description: "Rezerwacja nie powiodla się! Kod bledu: 1 - niewlasiwe auto,\
+            \ 2 - nie mozna wykonac rezerwacji"
+          example: 1
+    rent_rent_body:
+      type: object
+      properties:
+        carId:
+          type: integer
+          description: id auta
+          example: 12341225123
+        cvv:
+          type: integer
+          description: "Opcjonalnie: CVV karty do obciążenia"
+          example: 112
+        paymentType:
+          type: string
+          description: "Rodzaj platnosci. PP - prepaid, id karty - karta"
+          example: PP
+    inline_response_200_5:
+      type: object
+      properties:
+        cars:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_7'
+      example:
+        cars:
+          - car:
+              locationLat: "51.235123"
+              charge: 100
+              distanceLeft: 20
+              seats: 5
+              carId: 1248530713
+              regNumber: DW112233
+              locationLong: "16.50312"
+              kmCost: "1.30"
+              model: Yaris 1.0
+              activationCost: "10.30"
+              timeCost: "0.30"
+              brand: Toyota
+              status: ACTIVE
+            details:
+              lastUsed: 16123234234
+              eSimImei: "125123123"
+              esimPhoneNumber: 125123123
+              lastReservation: 1238912093
+              lastUpdate: 125123123
+              vin: ASDSGFA123123123
+              lastRental: 0
+              lastService: 125123123
+              mileage: 125123123
+          - car:
+              locationLat: "51.235123"
+              charge: 100
+              distanceLeft: 20
+              seats: 5
+              carId: 1248530713
+              regNumber: DW112233
+              locationLong: "16.50312"
+              kmCost: "1.30"
+              model: Yaris 1.0
+              activationCost: "10.30"
+              timeCost: "0.30"
+              brand: Toyota
+              status: ACTIVE
+            details:
+              lastUsed: 16123234234
+              eSimImei: "125123123"
+              esimPhoneNumber: 125123123
+              lastReservation: 1238912093
+              lastUpdate: 125123123
+              vin: ASDSGFA123123123
+              lastRental: 0
+              lastService: 125123123
+              mileage: 125123123
+    admin_car_body:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Car'
+        - $ref: '#/components/schemas/CarDetails'
+    inline_response_200_6:
+      properties:
+        carId:
+          type: integer
+          description: Id of a new added car
+          example: 12319828391283
+      example:
+        carId: 12319828391283
+    inline_response_200_7:
+      type: object
+      properties:
+        car:
+          $ref: '#/components/schemas/Car'
+        details:
+          $ref: '#/components/schemas/CarDetails'
+      example:
+        car:
+          locationLat: "51.235123"
+          charge: 100
+          distanceLeft: 20
+          seats: 5
+          carId: 1248530713
+          regNumber: DW112233
+          locationLong: "16.50312"
+          kmCost: "1.30"
+          model: Yaris 1.0
+          activationCost: "10.30"
+          timeCost: "0.30"
+          brand: Toyota
+          status: ACTIVE
+        details:
+          lastUsed: 16123234234
+          eSimImei: "125123123"
+          esimPhoneNumber: 125123123
+          lastReservation: 1238912093
+          lastUpdate: 125123123
+          vin: ASDSGFA123123123
+          lastRental: 0
+          lastService: 125123123
+          mileage: 125123123
+    car_id_body:
+      type: object
+      properties:
+        patch:
+          type: object
+          description: "Co zmienic? Tylko te wartosci, ktore chcesz zmienic (oczywiskie\
+            \ niektorych rzeczy sie nie da, np modyfikowanie ID)"
+          allOf:
+            - $ref: '#/components/schemas/Car'
+            - $ref: '#/components/schemas/CarDetails'
+    inline_response_200_8:
+      type: object
+      properties:
+        rentals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rental'
+      example:
+        rentals:
+          - rentalCost: "12.3"
+            ended: true
+            rentalStart: 124124123
+            rentalId: 12521334
+            carId: 212419820
+            rentalEnd: 123128512084
+            mileage: 1250812094812
+          - rentalCost: "12.3"
+            ended: true
+            rentalStart: 124124123
+            rentalId: 12521334
+            carId: 212419820
+            rentalEnd: 123128512084
+            mileage: 1250812094812
+    inline_response_200_9:
+      type: object
+      properties:
+        reservations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reservation'
+      example:
+        reservations:
+          - duration: 120
+            reservationId: 123124121322
+            reservationStart: 124529381639481
+            cardId: 4451324
+          - duration: 120
+            reservationId: 123124121322
+            reservationStart: 124529381639481
+            cardId: 4451324
+    inline_response_200_10:
+      type: object
+      properties:
+        cars:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_10_cars'
+      example:
+        cars:
+          - car:
+              balance: "20.30"
+              surname: Markowski
+              accountType: PERSONAL
+              name: Fryderyk
+              login: FrydMark1
+              email: FrydMark1
+              status: ACTIVE
+            details:
+              driverLicenceExpirationDate: driverLicenceExpirationDate
+              role: role
+              lastReservation: 6
+              pesel: "12381294819283"
+              driverLicenceNumber: driverLicenceNumber
+              lastRental: 0
+          - car:
+              balance: "20.30"
+              surname: Markowski
+              accountType: PERSONAL
+              name: Fryderyk
+              login: FrydMark1
+              email: FrydMark1
+              status: ACTIVE
+            details:
+              driverLicenceExpirationDate: driverLicenceExpirationDate
+              role: role
+              lastReservation: 6
+              pesel: "12381294819283"
+              driverLicenceNumber: driverLicenceNumber
+              lastRental: 0
+    inline_response_200_11:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        details:
+          $ref: '#/components/schemas/UserDetails'
+      example:
+        details:
+          driverLicenceExpirationDate: driverLicenceExpirationDate
+          role: role
+          lastReservation: 6
+          pesel: "12381294819283"
+          driverLicenceNumber: driverLicenceNumber
+          lastRental: 0
+        user:
+          balance: "20.30"
+          surname: Markowski
+          accountType: PERSONAL
+          name: Fryderyk
+          login: FrydMark1
+          email: FrydMark1
+          status: ACTIVE
+    user_id_body:
+      type: object
+      properties:
+        patch:
+          type: object
+          description: "Co zmienic? Tylko te wartosci, ktore chcesz zmienic (oczywiskie\
+            \ niektorych rzeczy sie nie da, np modyfikowanie ID)"
+          allOf:
+            - $ref: '#/components/schemas/User'
+            - $ref: '#/components/schemas/UserDetails'
+    inline_response_200_12:
+      type: object
+      properties:
+        cars:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_12_cars'
+      example:
+        cars:
+          - location:
+              locationLat: "52.3333"
+              locationLong: "16.300"
+              locationId: "124859018372309"
+              name: Orlen
+              locationType: GAS_STATION
+              locationReward: "1.30"
+          - location:
+              locationLat: "52.3333"
+              locationLong: "16.300"
+              locationId: "124859018372309"
+              name: Orlen
+              locationType: GAS_STATION
+              locationReward: "1.30"
+    admin_location_body:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Location'
+    inline_response_200_13:
+      properties:
+        locationId:
+          type: integer
+          description: Id nowej lokacji
+          example: 12319828391283
+      example:
+        locationId: 12319828391283
+    inline_response_200_14:
+      type: object
+      properties:
+        car:
+          $ref: '#/components/schemas/Location'
+        details:
+          $ref: '#/components/schemas/CarDetails'
+      example:
+        car:
+          locationLat: "52.3333"
+          locationLong: "16.300"
+          locationId: "124859018372309"
+          name: Orlen
+          locationType: GAS_STATION
+          locationReward: "1.30"
+        details:
+          lastUsed: 16123234234
+          eSimImei: "125123123"
+          esimPhoneNumber: 125123123
+          lastReservation: 1238912093
+          lastUpdate: 125123123
+          vin: ASDSGFA123123123
+          lastRental: 0
+          lastService: 125123123
+          mileage: 125123123
+    location_id_body:
+      type: object
+      properties:
+        patch:
+          type: object
+          description: "Co zmienic? Tylko te wartosci, ktore chcesz zmienic (oczywiskie\
+            \ niektorych rzeczy sie nie da, np modyfikowanie ID)"
+          allOf:
+            - $ref: '#/components/schemas/Location'
+    inline_response_200_10_cars:
+      type: object
+      properties:
+        car:
+          $ref: '#/components/schemas/User'
+        details:
+          $ref: '#/components/schemas/UserDetails'
+      example:
+        car:
+          balance: "20.30"
+          surname: Markowski
+          accountType: PERSONAL
+          name: Fryderyk
+          login: FrydMark1
+          email: FrydMark1
+          status: ACTIVE
+        details:
+          driverLicenceExpirationDate: driverLicenceExpirationDate
+          role: role
+          lastReservation: 6
+          pesel: "12381294819283"
+          driverLicenceNumber: driverLicenceNumber
+          lastRental: 0
+    inline_response_200_12_cars:
+      type: object
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+      example:
+        location:
+          locationLat: "52.3333"
+          locationLong: "16.300"
+          locationId: "124859018372309"
+          name: Orlen
+          locationType: GAS_STATION
+          locationReward: "1.30"
+  responses:
+    Unauthorized:
+      description: Brak autoryzacji! Sprawdz token!
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Empty'
+    NotActivated:
+      description: Konto nieaktywne! sprawdz maila!
+    NoDocuments:
+      description: Konto nie ma wgranych uprawnien do prowadzenia pojazdu!
+    Empty:
+      description: Pusty Json
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: { }
+  parameters:
+    SessionToken:
+      name: Session_Token
+      in: header
+      description: Token sesji
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: integer
+        example: 12943854693802
+      example: "1111111111111111"
+    Pagelength:
+      name: pagelength
+      in: query
+      description: Number of records to return
+      required: false
+      style: form
+      explode: true
+      schema:
+        maximum: 20
+        minimum: 1
+        type: number
+        default: 5
+    Startindex:
+      name: startindex
+      in: query
+      description: Start index for paging
+      required: false
+      style: form
+      explode: true
+      schema:
+        minimum: 0
+        type: number
+        default: 0
+    LocationLat:
+      name: locationLat
+      in: query
+      description: Szerokosc geograficzna
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+      example: "51.312312"
+    LocationLong:
+      name: locationLong
+      in: query
+      description: Dlugosc geograficzna
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+      example: "16.312312"
+
