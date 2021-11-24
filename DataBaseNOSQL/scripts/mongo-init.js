@@ -71,7 +71,7 @@ db.createCollection( "Car", {
                 modelName: {
                     bsonType : "string"
                 },
-                passengerNumber: {
+                seats: {
                     bsonType : "int"
                 },
                 lastUsed:{
@@ -104,7 +104,7 @@ db.createCollection( "Car", {
                 kmCost: {
                     bsonType: "string"
                 },
-                minCost: {
+                timeCost: {
                     bsonType: "string"
                 },
                 esimNumber: {
