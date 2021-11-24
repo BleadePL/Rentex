@@ -5,7 +5,10 @@ db.createUser(
     {
         user: "zgrate",
         pwd: "haslo123",
-        roles: [ {role:"userAdminAnyDatabase", db: "admin"}]
+        roles: [
+          { role: "userAdminAnyDatabase", db: "admin" },
+          { role: "readWriteAnyDatabase", db: "admin" }
+        ]
     }
 );
 
@@ -13,7 +16,10 @@ db.createUser(
     {
         user: "bleade",
         pwd: "123456",
-        roles: [ {role:"userAdminAnyDatabase", db: "admin"}]
+        roles: [
+          { role: "userAdminAnyDatabase", db: "admin" },
+          { role: "readWriteAnyDatabase", db: "admin" }
+        ]
     }
 );
 
@@ -21,7 +27,10 @@ db.createUser(
     {
         user: "konrad",
         pwd: "123456",
-        roles: [ {role:"userAdminAnyDatabase", db: "admin"}]
+        roles: [
+          { role: "userAdminAnyDatabase", db: "admin" },
+          { role: "readWriteAnyDatabase", db: "admin" }
+        ]
     }
 )
 
@@ -32,7 +41,7 @@ db.createUser({
   roles: [
     {
       role: 'readWrite',
-      db: 'mongodb',
+      db: 'rental',
     },
   ],
 });
