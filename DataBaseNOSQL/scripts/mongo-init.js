@@ -113,11 +113,30 @@ db.createCollection( "Car", {
                 esimImei: {
                     bsonType: "string"
                 },
+                rentals: {
+                    bsonType: "array",
+                    uniqueItems: true,
+                    additionalProperties: false,
+                    items: {
+                        bsonType: "object",
+                    }
+                },
+                services: {
+                    bsonType: "array",
+                    uniqueItems: true,
+                    additionalProperties: false,
+                    items: {
+                        bsonType: "object",
+                    }
+                },
+                reservation: {
+                    bsonType: "object",
+                }
             }
         } }
 } );
 
-db.createCollection( "Client", {
+db.createCollection( "User", {
     validator: { $jsonSchema: {
             bsonType: "object",
             required: [ "pesel","name","surname","balance","login","password","email","accountType","activationCode","status","role"],
@@ -163,6 +182,28 @@ db.createCollection( "Client", {
                 },
                 role:{
                     enum: ["SERWISANT", "ADMIN", "CLIENT"]
+                },
+                services: {
+                    bsonType: "array",
+                    uniqueItems: true,
+                    additionalProperties: false,
+                    items: {
+                        bsonType: "object",
+                    }
+                },
+                rentals: {
+                    bsonType: "array",
+                    uniqueItems: true,
+                    additionalProperties: false,
+                    items: {
+                        bsonType: "object",
+                    }
+                },
+                reservation: {
+                    bsonType: "object",
+                },
+                creditCard: {
+                    bsonType: "object",
                 }
             }
         } }
@@ -191,6 +232,14 @@ db.createCollection( "Location", {
                 locationLong: {
                     bsonType: "string"
                 },
+                services: {
+                    bsonType: "array",
+                    uniqueItems: true,
+                    additionalProperties: false,
+                    items: {
+                        bsonType: "object",
+                    }
+                }
             }
         } }
 } );
@@ -208,6 +257,36 @@ db.createCollection( "Reservation", {
                 },
                 reservationCost: {
                     bsonType: "string"
+                },
+                car: {
+                    bsonType: "object"
+                },
+                reservedBy: {
+                    bsonType: "object"
+                }
+            }
+        } }
+} );
+
+db.createCollection( "CreditCard", {
+    validator: { $jsonSchema: {
+            bsonType: "object",
+            required: [ "cardNumber", "expirationDate", "cardHolderName", "cardHolderAddress", "cardHolder"],
+            properties: {
+                cardNumber: {
+                    bsonType: "string"
+                },
+                expirationDate: {
+                    bsonType: "date",
+                },
+                cardHolderName: {
+                    bsonType: "string"
+                },
+                cardHolderAddress: {
+                    bsonType: "string"
+                },
+                cardHolder: {
+                    bsonType: "object"
                 }
             }
         } }
@@ -216,7 +295,7 @@ db.createCollection( "Reservation", {
 db.createCollection( "Rental", {
     validator: { $jsonSchema: {
             bsonType: "object",
-            required: [ "rentalStart", "rentalEnd", "rentalCost"],
+            required: [ "rentalStart", "car", "renter"],
             properties: {
                 rentalStart: {
                     bsonType: "date"
@@ -232,28 +311,37 @@ db.createCollection( "Rental", {
                 },
                 ended: {
                     bsonType: "bool"
+                },
+                car: {
+                    bsonType: "object"
+                },
+                renter: {
+                    bsonType: "object"
                 }
             }
-        } }
+    } }
 } );
-db.createCollection( "CreditCard", {
+
+db.createCollection( "Service", {
     validator: { $jsonSchema: {
             bsonType: "object",
-            required: [ "cardNumber", "expirationDate", "cardHolderName", "cardHolderAddress"],
+            required: [ "dateStart", "car", "leftBy", "location"],
             properties: {
-                cardNumber: {
-                    bsonType: "string"
+                dateStart: {
+                    bsonType: "date"
                 },
-                expirationDate: {
-                    bsonType: "date",
+                dateEnd: {
+                    bsonType: "date"
                 },
-                cardHolderName: {
-                    bsonType: "string"
+                car: {
+                    bsonType: "object"
                 },
-                cardHolderAddress: {
-                    bsonType: "string"
+                leftBy: {
+                    bsonType: "object"
                 },
+                location: {
+                    bsonType: "object"
+                }
             }
-        } }
-
+    } }
 } );
