@@ -16,8 +16,8 @@ COLLECTION_CAR = "Car"
 COLLECTION_LOCATION = "Location"
 COLLECTION_RENTAL_ARCHIVE = "RentalArchive"
 
-client = MongoClient("mongodb://" + USERNAME + ":" + PASSWORD + "@" + HOSTNAME + ":" + PORT + "/", connect=True)
 
+client = MongoClient("mongodb://" + USERNAME + ":" + PASSWORD + "@" + HOSTNAME + ":" + PORT + "/", connect=True)
 
 class MongoDBInterface(DatabaseInterface):
 
@@ -149,7 +149,7 @@ class MongoDBInterface(DatabaseInterface):
         """
         pass
 
-    def changePassword(self, userId, oldPwd, newPwd):
+    def changePassword(self, userId, newPwd):
         user = self.rentalDb["User"].find_one({"_id": userId, "password": oldPwd})
         if user is None:
             return None
@@ -172,7 +172,7 @@ class MongoDBInterface(DatabaseInterface):
             cards.append(CreditCard.from_dict(card))
         return cards
 
-    def addCard(self, userId, cardNumber, expirationDate, cardHolder, holderAddress):
+    def addCard(self, userId, card):
 
         added = self.rentalDb["CreditCard"].insert_one(
             {

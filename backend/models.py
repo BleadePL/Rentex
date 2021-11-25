@@ -170,7 +170,8 @@ class User:
     Do not edit the class manually.
     """
 
-    def __init__(self, userId: str = None, login: str = None, email: str = None, name: str = None, surname: str = None,
+    def __init__(self, userId: str = None, login: str = None, password: str = None, email: str = None, name: str = None,
+                 surname: str = None,
                  account_type: str = None, status: str = None, balance: str = None, pesel: str = None,
                  driver_licence_number: str = None, driver_licence_expiration_date: str = None,
                  last_rental: int = None, last_reservation: int = None, role: str = None,
@@ -207,6 +208,7 @@ class User:
 
         self._id = userId
         self.login = login
+        self.password = password
         self.email = email
         self.name = name
         self.surname = surname
@@ -310,7 +312,7 @@ class CreditCard:
     Do not edit the class manually.
     """
 
-    def __init__(self, card_id: str = None, lastdigits: int = None, expiration: str = None,
+    def __init__(self, card_id: str = None, number: int = None, expiration: str = None,
                  holder_name: str = None, holder_address: str = None):  # noqa: E501
         """CreditCard - a model defined in Swagger
 
@@ -323,7 +325,7 @@ class CreditCard:
         """
 
         self._id = card_id
-        self.lastdigits = lastdigits
+        self.number = number
         self.expiration = expiration
         self.holderName = holder_name
         self.holderAddress = holder_address

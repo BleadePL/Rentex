@@ -4,7 +4,6 @@ from models import *
 # TODO: POPprzenosiłem
 
 
-
 class DatabaseInterface:
 
     def authUser(self, login, password):
@@ -71,7 +70,7 @@ class DatabaseInterface:
         """
         pass
 
-    def getUser(self, userId):
+    def getUser(self, userId) -> User:
         """
 
         :param userId:
@@ -89,10 +88,15 @@ class DatabaseInterface:
         """
         pass
 
-    def changePassword(self, userId, oldPwd, newPwd):
+    def changePassword(self, userId, newPwd):
         pass
 
-    def updateLocation(self, userId, location: tuple[str, str]):
+    def updateLocation(self, userId, location: tuple[str, str]) -> bool:
+        """
+        :param userId:
+        :param location: Tuple in form Latitude, Longitude
+        :returns True if success false if not
+        """
         pass  # TODO: useless?
 
     def rentalHistory(self, userId, pageIndex, pageLength):
@@ -101,7 +105,11 @@ class DatabaseInterface:
     def getCards(self, userId):
         pass
 
-    def addCard(self, userId, cardNumber, expirationDate, cardHolder, holderAddress):
+    def addCard(self, userId, card: CreditCard) -> bool:
+        """
+        :param card Card object
+        :returns True if succesfull, false if not
+        """
         pass
 
     def deleteCard(self, userId, cardId):
@@ -166,7 +174,13 @@ class DatabaseInterface:
     def patchUser(self, userId, changes: dict):
         pass
 
-    def getUserRentalHistory(self, userId):
+    def getUserRentalHistory(self, userId, pageIndex, pageLength) -> list[Rental]:
+        """
+        :param userId: id of user
+        :param pageIndex: a page number
+        :param pageLength: length of the page
+        :returns List can be returned empty, if there is no Rental in this category
+        """
         pass
 
     def addLocation(self, location: Location):
@@ -191,4 +205,13 @@ class DatabaseInterface:
         pass
 
     def getServices(self, carId):
+        pass
+
+    def getCard(self, user_id, card_id) -> CreditCard:
+        """
+
+        :param user_id:
+        :param card_id:
+        :returns None if card not found or card is not a user card, CreditCard if it's okey
+        """
         pass
