@@ -23,7 +23,7 @@ class MongoDBInterface(DatabaseInterface):
             return None
         return Car.from_dict(carDict)
 
-    def getCars(self):
+    def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):
         cars = []
         for c in self.rentalDb["Car"].find():
             cars.append(Car.from_dict(c))
