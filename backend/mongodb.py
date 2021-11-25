@@ -1,7 +1,7 @@
 from bson import ObjectId
 from pymongo import MongoClient
 from db_interface import DatabaseInterface
-from backend.models.car import Car
+from backend.models_old.car import Car
 
 HOSTNAME = "vps.zgrate.ovh"
 PORT = "27017"

@@ -1,12 +1,14 @@
 import secrets
 
-from flask import Flask
+from flask import Flask, Response
 from flask_login import LoginManager
 
 app = Flask("Wypozyczalnia Aut BACKEND")
 app.secret_key = secrets.token_hex()
 login = LoginManager(app)
+BAD_REQUEST = {}, 400
+EMPTY_OK = {}, 200
 # auth = Authorize()
 print("Initialized!")
 
-import controllers.login_controller
+import login_controller

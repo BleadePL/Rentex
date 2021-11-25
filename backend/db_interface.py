@@ -1,30 +1,90 @@
-from backend.models.car import Car
-from backend.models.location import Location
-from backend.models.user import User
+from backend.models_old.car import Car
+from backend.models_old.location import Location
+from backend.models_old.user import User
 
 
 class DatabaseInterface:
 
     def authUser(self, login, password):
+        """
+        :param login:
+        :param password:
+        :return None if not authorized, user_id if authorized
+        """
+        pass
+
+    def isUserWithEmailInDB(self, email) -> bool:
+        """
+
+        :param email:
+        :return True if there is a user with this email, false if not 
+        """
+        pass
+
+    def isUserWithLoginInDB(self, login) -> bool:
+        """
+        :return True if there is an user with this login, false if not
+        """
         pass
 
     def registerUser(self, name: str, surname: str, gender: str, login: str, password: str, address: str, email: str,
-                     pesel: str):
+                     pesel: str) -> str:
+        """
+        :param name:
+        :param surname:
+        :param gender:
+        :param login:
+        :param password:
+        :param address:
+        :param email:
+        :param pesel:
+        :return None if any error, user_id if success
+        """
         pass
 
     def getUserToken(self, userId: str):
         pass
 
-    def getAccountStatus(self, userId: str):
+    def getAccountStatus(self, userId: str) -> str:
+        """
+
+        :param userId:
+        :return Current status of the account as a str, or None if any error
+        """
         pass
 
-    def getActivationToken(self, userId: str):
+    def getActivationToken(self, userId: str) -> str:
+        """
+
+        :param userId:
+        :return None if there is no token, or token of activation
+        """
         pass
 
-    def activateAccount(self, userId: str):
+    def activateAccount(self, token: str) -> bool:
+        """
+
+        :param token:
+        :return true if account activated, false if not
+        """
         pass
 
-    def getUser(self, userId):
+    def getUser(self, userId) -> 'User':
+        """
+
+        :param userId:
+        :return User, or None if any error
+        """
+        pass
+
+    def setActivationToken(self, userId: int, token: str) -> bool:
+        """
+
+        :param userId:
+        :param token: 6 digits pin
+        :return true if successful, false if not
+
+        """
         pass
 
     def changePassword(self, userId, oldPwd, newPwd):
