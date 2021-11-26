@@ -153,6 +153,10 @@ db.createCollection( "Car", {
                         location: {
                             bsonType: "int",
                             description: "must be an int and is required"
+                        },
+                        description: {
+                            bsonType: "string",
+                            description: "must be an string"
                         }
                     }
                 }
