@@ -201,7 +201,7 @@ class MongoDBInterface(DatabaseInterface):
     def getReservation(self, userId, reservationId):
         pass
 
-    def endReservation(self, userId, reservationId):
+    def endReservation(self, reservation: Reservation):
         pass
 
     def startReservation(self, reservation: Reservation):
@@ -267,7 +267,7 @@ class MongoDBInterface(DatabaseInterface):
     def getService(self, cardId, serviceId):
         pass
 
-    def getServices(self, carId):
+    def getServicesHistory(self, carId):
         pass
 
 

@@ -9,39 +9,11 @@ from flask_login import login_user, logout_user, login_required, current_user
 from backend.db_interface import DatabaseInterface
 from backend.utils import parse_required_fields
 from database_access import RENTAL_DB
-from flask_main import app, login, EMPTY_OK, BAD_REQUEST
-
-PHOTOS_TARGET = "licences"
-
-if not os.path.exists(PHOTOS_TARGET):
-    os.mkdir(PHOTOS_TARGET)
+from flask_main import app, login, EMPTY_OK, BAD_REQUEST, LoggedInUser
 
 RENTAL_DB: DatabaseInterface
 
-
-class LoggedInUser:
-    def __init__(self, user_id, session_token):
-        self.id = user_id
-        self.session_token = session_token
-        self.activation_token_time = None
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return self.id
-
-    def retrieve_user_from_db(self):
-        return RENTAL_DB.getUser(userId=self.id)
-
-
-logged_in_users: list[LoggedInUser] = [LoggedInUser("test123", "TEST")]
+logged_in_users: list[LoggedInUser]
 
 
 @login.unauthorized_handler
@@ -60,11 +32,14 @@ def load_user_from_request(request: Request):
 
 
 @app.route("/login/login", methods=["POST"])
-def login():
+def loginToSystem():
     if request.json is None:
         return BAD_REQUEST
-    l = request.json["login"]
-    pas = request.json["password"]
+    parsed = parse_required_fields(request.json, ["login", "password"])
+    if parsed is None:
+        return BAD_REQUEST
+    l = parsed["login"]
+    pas = parsed["password"]
     user_id = RENTAL_DB.authUser(l, pas)
     if user_id is not None:
         token = secrets.token_hex()
@@ -74,7 +49,7 @@ def login():
         logged_in_users.append(user)
         return {'token': token}
     else:
-        return BAD_REQUEST
+        return {}, 401
 
 
 @app.route("/login/logout", methods=["POST"])
@@ -150,3 +125,11 @@ def uploadPhoto():
     back = request.files["back"]
     back.save(PHOTOS_TARGET + "/" + current_user.get_id() + "_back_" + back.filename)
     return {}, 200
+
+
+print("Login_controller" + __name__)
+
+if __name__ == "login_controller":
+    PHOTOS_TARGET = "licences"
+    if not os.path.exists(PHOTOS_TARGET):
+        os.mkdir(PHOTOS_TARGET)

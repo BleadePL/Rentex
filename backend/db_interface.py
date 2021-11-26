@@ -237,16 +237,35 @@ class DatabaseInterface:
     def patchLocation(self, locationId, changes: dict):
         pass
 
-    def serviceCar(self, carId):
+    def serviceCar(self, carId) -> str:
+        """
+
+        :returns ID of the created service, None if any error
+        """
         pass
 
-    def endService(self, carId, serviceId):
+    def endService(self, serviceId) -> bool:
+        """
+
+        :param serviceId:
+        :returns True if successfull, False if not found or no Service
+        """
         pass
 
-    def getService(self, cardId, serviceId):
+    def getService(self, serviceId) -> Service:
+        """
+
+        :param serviceId:
+        :returns None if error or not found, Service if found
+        """
         pass
 
-    def getServices(self, carId):
+    def getServicesHistory(self, carId) -> list[Service]:
+        """
+
+        :param carId:
+        :returns Can be empty
+        """
         pass
 
     def getCard(self, user_id, card_id) -> CreditCard:

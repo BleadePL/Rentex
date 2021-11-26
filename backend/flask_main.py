@@ -1,4 +1,5 @@
 import secrets
+import threading
 import time
 
 from flask import Flask, Response
@@ -8,22 +9,29 @@ from backend.database_access import RENTAL_DB
 from backend.models import Rental, Car, Reservation
 from backend.utils import calculate_gps_distance, gr_to_pln_gr
 
-app = Flask("Wypozyczalnia Aut BACKEND")
-app.secret_key = secrets.token_hex()
-login = LoginManager(app)
-BAD_REQUEST = {}, 400
-EMPTY_OK = {}, 200
-
-MAX_RESERVATION_TIME = 300
-# auth = Authorize()
-print("Initialized!")
-
-import login_controller
-import user_controller
-import service_controller
-import browse_controller
-
 import schedule
+
+
+class LoggedInUser:
+    def __init__(self, user_id, session_token):
+        self.id = user_id
+        self.session_token = session_token
+        self.activation_token_time = None
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return self.id
+
+    def retrieve_user_from_db(self):
+        return RENTAL_DB.getUser(userId=self.id)
 
 
 class PendingRental:
@@ -103,3 +111,35 @@ class RentalReservationTimerTask:
         reservation.reservationEnd = int(time.time())
         self.active_reservations.remove(reservation)
         return RENTAL_DB.endReservation(reservation)
+
+
+app: Flask
+login: LoginManager
+BAD_REQUEST: tuple
+EMPTY_OK: tuple
+rental_timer_task: RentalReservationTimerTask
+MAX_RESERVATION_TIME = 300
+
+print(__name__)
+if __name__ == "flask_main":
+    app = Flask("Wypozyczalnia Aut BACKEND")
+    app.secret_key = secrets.token_hex()
+    login = LoginManager(app)
+    BAD_REQUEST = {}, 400
+    EMPTY_OK = {}, 200
+
+    import login_controller
+    import user_controller
+    import service_controller
+    import browse_controller
+
+    rental_timer_task = RentalReservationTimerTask()
+    schedule.every().second.do(rental_timer_task.tick)
+
+
+    def loop():
+        while True:
+            schedule.run_pending()
+
+
+    threading.Thread(target=loop).start()

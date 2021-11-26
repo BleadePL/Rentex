@@ -5,7 +5,7 @@ from flask import request, Response, Request
 from flask_login import login_user, logout_user, login_required, current_user
 
 from backend.db_interface import DatabaseInterface
-from backend.login_controller import LoggedInUser
+from backend.flask_main import LoggedInUser
 from backend.models import CreditCard
 from backend.utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
     is_longitude_valid
