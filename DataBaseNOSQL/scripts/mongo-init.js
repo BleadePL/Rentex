@@ -254,7 +254,7 @@ db.createCollection( "User", {
             },
             reservation: {
                 bsonType: "object",
-                required: [ "reservationStart", "reservationEnd", "reservationCost", "car"],
+                required: [ "reservationStart", "reservationEnd", "car"],
                 properties: {
                     reservationStart: {
                         bsonType: "date",
@@ -262,10 +262,6 @@ db.createCollection( "User", {
                     },
                     reservationEnd: {
                         bsonType: "date",
-                        description: "must be a string and is required"
-                    },
-                    reservationCost: {
-                        bsonType: "string",
                         description: "must be a string and is required"
                     },
                     car: {
