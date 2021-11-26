@@ -12,3 +12,6 @@ EMPTY_OK = {}, 200
 print("Initialized!")
 
 import login_controller
+import user_controller
+import service_controller
+import browse_controller

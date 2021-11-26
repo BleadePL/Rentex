@@ -116,17 +116,38 @@ class DatabaseInterface:
         pass
 
     def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
+        """
+
+        :param location: tuple, first location is Longitude, second is Latitude
+        :param distance: this is already validated
+        :returns list of cards. Can be empty. None if any error occured
+        """
         pass
 
     def browseNearestLocations(
             self, location: tuple[str, str], distance
     ) -> list["Location"]:
+        """
+
+        :param location: tuple, first one is lat, second one is long
+        :param distance:
+        """
         pass
 
-    def getCar(self, carId):
+    def getCar(self, carId) -> Car:
+        """
+
+        :param carId:
+        :return None if car not found, Car if found
+        """
         pass
 
-    def getLocation(self, locationId):
+    def getLocation(self, locationId) -> Location:
+        """
+
+        :param locationId:
+        :returns None if location not found, Location if found
+        """
         pass
 
     def getReservation(self, userId, reservationId):

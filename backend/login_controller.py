@@ -7,6 +7,7 @@ from flask import request, Response, Request
 from flask_login import login_user, logout_user, login_required, current_user
 
 from backend.db_interface import DatabaseInterface
+from backend.utils import parse_required_fields
 from database_access import RENTAL_DB
 from flask_main import app, login, EMPTY_OK, BAD_REQUEST
 
@@ -111,14 +112,9 @@ def register():
     if request.json is None:
         return {'error': "UNKNOWN"}, 400
 
-    values = ["name", "surname", "gender", "login", "password", "address", "email", "pesel"]
-    register_request = {}
-    for name in values:
-        if name not in request.json:
-            return {'error': 'INVALID_REQUEST'}, 400
-        else:
-            register_request[name] = request.json[name]
-    print(register_request)
+    register_request = parse_required_fields(request.json,
+                                             ["name", "surname", "gender", "login", "password", "address", "email",
+                                              "pesel"])
     if RENTAL_DB.isUserWithEmailInDB(register_request["email"]):
         return {'error': "EMAIL_USED"}, 400
     elif RENTAL_DB.isUserWithLoginInDB(register_request["login"]):

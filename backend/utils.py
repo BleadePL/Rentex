@@ -1,3 +1,7 @@
+import math
+import re
+
+
 def parse_required_fields(json, fields):
     parsed = {}
     for f in fields:
@@ -33,3 +37,33 @@ def execute_card_verification(card, cvv):
     :rtype: object
     """
     return True
+
+
+# Source https://stackoverflow.com/questions/3518504/regular-expression-for-matching-latitude-longitude-coordinates
+
+latitude_validator_regex = re.compile("^(\+|-)?(?:90(?:(?:\.0{1,10})?)|(?:[0-9]|[1-8][0-9])(?:(?:\.[0-9]{1,10})?))$")
+longitude_validator_regex = re.compile(
+    "^(\+|-)?(?:180(?:(?:\.0{1,10})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,10})?))$")
+
+
+def is_latitude_valid(latitude):
+    return latitude_validator_regex.match(latitude) is not None
+
+
+def is_longitude_valid(longitude):
+    return longitude_validator_regex.match(longitude) is not None
+
+
+def calculate_gps_distance(coord1, coord2):
+    R = 6372800  # Earth radius in meters
+    lat1, lon1 = coord1
+    lat2, lon2 = coord2
+
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi / 2) ** 2 + \
+        math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))

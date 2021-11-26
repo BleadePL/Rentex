@@ -7,18 +7,13 @@ from flask_login import login_user, logout_user, login_required, current_user
 from backend.db_interface import DatabaseInterface
 from backend.login_controller import LoggedInUser
 from backend.models import CreditCard
-from backend.utils import parse_required_fields, validate_card, execute_card_verification
+from backend.utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
+    is_longitude_valid
 from database_access import RENTAL_DB
 from flask_main import app, login, EMPTY_OK, BAD_REQUEST
 
 RENTAL_DB: DatabaseInterface
 current_user: LoggedInUser
-
-# Source https://stackoverflow.com/questions/3518504/regular-expression-for-matching-latitude-longitude-coordinates
-
-latitude_validator_regex = re.compile("^(\+|-)?(?:90(?:(?:\.0{1,10})?)|(?:[0-9]|[1-8][0-9])(?:(?:\.[0-9]{1,10})?))$")
-longitude_validator_regex = re.compile(
-    "^(\+|-)?(?:180(?:(?:\.0{1,10})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,10})?))$")
 
 
 @app.route("/user/details", methods=["GET"])
@@ -63,8 +58,7 @@ def changePassword():
 def updateLocation():
     if request.json is None and "locationLat" not in request.json and "locationLong" not in request.json:
         return BAD_REQUEST
-    if latitude_validator_regex.match(request.json["locationLat"]) is None or longitude_validator_regex.match(
-            request.json["locationLong"]):
+    if not is_latitude_valid(request.json["locationLat"]) or not is_longitude_valid(request.json["locationLong"]):
         return BAD_REQUEST
     if not RENTAL_DB.updateLocation(current_user.get_id(), (request.json["locationLat"], request.json["locationLong"])):
         return {}, 500
@@ -105,9 +99,9 @@ def getCard(card_id: str):
         return BAD_REQUEST
 
     return {
-        "lastdigits": card.number[-4:],
-        "expiration": card.expiration,
-        "holderName": card.holderName
+        "lastdigits": card.cardNumber[-4:],
+        "expiration": card.expirationDate,
+        "holderName": card.cardHolderName
     }
 
 

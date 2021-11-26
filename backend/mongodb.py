@@ -1,5 +1,7 @@
 from bson import ObjectId
 from pymongo import MongoClient
+
+from backend.utils import calculate_gps_distance
 from db_interface import DatabaseInterface
 from backend.models import *
 
@@ -25,20 +27,6 @@ class MongoDBInterface(DatabaseInterface):
         super().__init__()
         self.rentalDb = client[DB_NAME]
 
-    def __GPSDistance(self, coord1, coord2):
-
-        R = 6372800  # Earth radius in meters
-        lat1, lon1 = coord1
-        lat2, lon2 = coord2
-
-        phi1, phi2 = math.radians(lat1), math.radians(lat2)
-        dphi = math.radians(lat2 - lat1)
-        dlambda = math.radians(lon2 - lon1)
-
-        a = math.sin(dphi / 2) ** 2 + \
-            math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-
-        return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     def authUser(self, login, password):
         """
@@ -189,9 +177,10 @@ class MongoDBInterface(DatabaseInterface):
 
     def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
         def fun():
-            return self.__GPSDistance((float(location[0]), float(location[1])),
-                                      (float(self.currentLocationLat), float(
-                                          self.currentLocationLong))) <= distance  # TODO: To musisz pobrać od Usera, albo w sumie możemy przesyłać jako argument
+            return calculate_gps_distance((float(location[0]), float(location[1])),
+                                          (float(self.currentLocationLat), float(
+                                              self.currentLocationLong))) <= distance
+            # TODO: To musisz pobrać od Usera, albo w sumie możemy przesyłać jako argument. Do omówienia
 
         cars = []
         for car in self.rentalDb["Car"].find(fun()):  # TODO: check if this fuckery works
