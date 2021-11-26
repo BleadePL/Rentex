@@ -204,7 +204,7 @@ class MongoDBInterface(DatabaseInterface):
     def endReservation(self, userId, reservationId):
         pass
 
-    def startReservation(self, userId, carId):
+    def startReservation(self, reservation: Reservation):
         pass
 
     def startRental(self, userId, carId):
@@ -213,7 +213,7 @@ class MongoDBInterface(DatabaseInterface):
     def getRental(self, userId, rentalId):
         pass
 
-    def endRental(self, userId, rentalId):
+    def endRental(self, rent: Rental):
         pass
 
     def adminActive(self, userId):
@@ -243,7 +243,7 @@ class MongoDBInterface(DatabaseInterface):
     def patchUser(self, userId, changes: dict):
         pass
 
-    def getUserRentalHistory(self, userId):
+    def getUserRentalHistory(self, userId, pageIndex, pageLength):
         pass
 
     def addLocation(self, location: Location):

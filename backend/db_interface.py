@@ -153,19 +153,40 @@ class DatabaseInterface:
     def getReservation(self, userId, reservationId):
         pass
 
-    def endReservation(self, userId, reservationId):
+    def endReservation(self, reservation: Reservation) -> bool:
+        """
+
+        :param reservation: Reservation object, ready to stripped and put into DB
+        :return True if success, false if not
+        """
         pass
 
-    def startReservation(self, userId, carId):
+    def startReservation(self, reservation: Reservation) -> bool:
+        """
+
+        :param reservation: Reservation object, ready to stripped and put into DB
+        :return True if success, false if not
+        """
         pass
 
-    def startRental(self, userId, carId):
+    def startRental(self, userId, rent: Rental) -> bool:
+        """
+
+        :param userId: User ID
+        :param rent: Already calculated Rental. Only strip down Client_id
+        :returns true if success, false if not
+        """
         pass
 
     def getRental(self, userId, rentalId):
         pass
 
-    def endRental(self, userId, rentalId):
+    def endRental(self, rent: Rental) -> bool:
+        """
+
+        :param rent: Already calculated and ready to be archived rental
+        :returns True if success, False if not
+        """
         pass
 
     def adminActive(self, userId):

@@ -67,3 +67,7 @@ def calculate_gps_distance(coord1, coord2):
         math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
 
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def gr_to_pln_gr(gr: int) -> str:
+    return "" + str(int(gr / 100)) + "." + str(gr % 100)
