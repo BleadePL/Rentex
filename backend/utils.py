@@ -2,7 +2,7 @@ import math
 import re
 
 from backend.database_access import RENTAL_DB
-from backend.models import CreditCard, User
+from backend.models import CreditCard
 
 
 def parse_required_fields(json, fields):

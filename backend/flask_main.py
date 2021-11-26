@@ -7,7 +7,6 @@ from flask_login import LoginManager
 
 from backend.database_access import RENTAL_DB
 from backend.models import Rental, Car, Reservation, CreditCard
-from backend.utils import calculate_gps_distance, gr_to_pln_gr, charge_card
 
 import schedule
 
@@ -60,6 +59,7 @@ class PendingRental:
             return self.rent._id == other._id
 
     def update_distance(self, currentLong, currentLat):
+        from backend.utils import calculate_gps_distance
         d = calculate_gps_distance((currentLong, currentLat), (currentLong, currentLat))
         if d > PendingRental.DISTANCE_THRESHOLD:
             self.distance += d
@@ -103,6 +103,7 @@ class RentalReservationTimerTask:
         if r is None:
             return False
         cost = r.calculate_current_cost()
+        from backend.utils import charge_card, gr_to_pln_gr
         if not charge_card(cost, r.paymentType == "PP", r.card, r.cvv, r.rent.userId):
             return False
         self.active_rentals.remove(r)
@@ -148,13 +149,14 @@ if __name__ == "flask_main":
     BAD_REQUEST = {}, 400
     EMPTY_OK = {}, 200
 
-    import login_controller
-    import user_controller
-    import service_controller
-    import browse_controller
-
     rental_timer_task = RentalReservationTimerTask()
     schedule.every().second.do(rental_timer_task.tick)
+
+    from login_controller import *
+    from user_controller import *
+    from service_controller import *
+    from browse_controller import *
+    from rent_controller import *
 
 
     def loop():

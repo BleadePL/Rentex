@@ -1,8 +1,6 @@
-import re
-
 import bcrypt
-from flask import request, Response, Request
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import request
+from flask_login import login_required, current_user
 
 from backend.db_interface import DatabaseInterface
 from backend.flask_main import LoggedInUser
@@ -10,7 +8,7 @@ from backend.models import CreditCard
 from backend.utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
     is_longitude_valid
 from database_access import RENTAL_DB
-from flask_main import app, login, EMPTY_OK, BAD_REQUEST
+from flask_main import app, EMPTY_OK, BAD_REQUEST
 
 RENTAL_DB: DatabaseInterface
 current_user: LoggedInUser
@@ -105,7 +103,7 @@ def getCard(card_id: str):
     }
 
 
-@app.route("/user/card/<card_id>/charge", method=["POST"])
+@app.route("/user/card/<card_id>/charge", methods=["POST"])
 @login_required
 def charge(card_id: str):
     if request.json is None or "balance" not in request.json or "cvv" not in request.json:

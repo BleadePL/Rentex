@@ -1,10 +1,9 @@
-from flask import request, Response, Request
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import request
+from flask_login import login_required
 
-from backend.db_interface import DatabaseInterface
 from backend.models import Car, Location
 from database_access import RENTAL_DB
-from flask_main import app, login, EMPTY_OK, BAD_REQUEST
+from flask_main import app, BAD_REQUEST
 from utils import parse_required_fields, is_latitude_valid, is_longitude_valid
 
 

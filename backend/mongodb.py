@@ -1,11 +1,10 @@
+import bcrypt
 from bson import ObjectId
 from pymongo import MongoClient
 
-from utils import calculate_gps_distance
 from db_interface import DatabaseInterface
 from models import *
 
-import bcrypt
 salt = b'$2b$12$pzEs7Xy4xlrgcpLSrcN71O' #Temp
 
 HOSTNAME = "vps.zgrate.ovh"
@@ -183,20 +182,22 @@ class MongoDBInterface(DatabaseInterface):
             "expirationDate": card.expirationDate,
             "cardHolderName": card.cardHolderName,
             "cardHolderAddress": card.cardHolderAddress
-            }}})
+        }}})
         return result.modified_count != 0
 
     def deleteCard(self, userId, cardId):
         result = self.rentalDb["User"].update_one({"_id": userId}, {'$pull': {"CreditCards": {
             "_id": cardId
-            }}})
+        }}})
         return result.modified_count != 0
 
-    def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]: 
+    def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
+        from utils import calculate_gps_distance
         def fun():
             return calculate_gps_distance((float(location[0]), float(location[1])),
                                           (float(self.currentLocationLat), float(
                                               self.currentLocationLong))) <= distance
+
         cars = []
         for car in self.rentalDb["Car"].find(fun()):  # TODO: check if this fuckery works
             cars.append(Car.from_dict(car))

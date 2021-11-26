@@ -1,9 +1,9 @@
 from flask import request
 from flask_login import login_required, current_user
 
-from backend.utils import parse_required_fields
 from database_access import RENTAL_DB
 from flask_main import app, EMPTY_OK, BAD_REQUEST, rental_timer_task, PendingRental
+from utils import parse_required_fields
 
 
 @app.route("/rent/reservation/<reservation_id>", methods=["GET"])
