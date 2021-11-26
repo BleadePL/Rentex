@@ -1,11 +1,12 @@
 from bson import ObjectId
 from pymongo import MongoClient
 
-from backend.utils import calculate_gps_distance
+from utils import calculate_gps_distance
 from db_interface import DatabaseInterface
-from backend.models import *
+from models import *
 
-import math
+import bcrypt
+salt = b'$2b$12$pzEs7Xy4xlrgcpLSrcN71O' #Temp
 
 HOSTNAME = "vps.zgrate.ovh"
 PORT = "27017"
@@ -34,7 +35,7 @@ class MongoDBInterface(DatabaseInterface):
         :param password:
         :return None if not authorized, user_id if authorized
         """
-        user = self.rentalDb["User"].find_one({"login": login, "password": password})
+        user = self.rentalDb["User"].find_one({"login": login, "password": bcrypt.hashpw(password, salt)})
         if user is None:
             return None
         return User.from_dict(user)
@@ -62,16 +63,21 @@ class MongoDBInterface(DatabaseInterface):
        :return None if any error, user_id if success
        """
         if self.rentalDb["User"].find_one({"login": login}) is not None:
-            raise ValueError("login already in use")
+            return None
         added = self.rentalDb["User"].insert_one(
             {
                 "name": name,
                 "surname": surname,
                 "login": login,
-                "password": password,
+                "password": bcrypt.hashpw(password, salt),
                 "address": address,
                 "email": email,
                 "pesel": pesel,
+                "balance": "0",
+                "accountType": "UNKNOWN",
+                "activationCode": "",
+                "status": "INACTIVE",
+                "role": "CLIENT"
             }
         )
         return added.inserted_id
@@ -91,7 +97,7 @@ class MongoDBInterface(DatabaseInterface):
         )
         if userStatus is None:
             return None
-        return userStatus
+        return userStatus["status"] # TODO: check if this returns value
 
     def getActivationToken(self, userId: str):
         """
@@ -105,7 +111,7 @@ class MongoDBInterface(DatabaseInterface):
         )
         if activationToken is None:
             return None
-        return activationToken
+        return activationToken["activationCode"]
 
     def activateAccount(self, userId: str):
         """
@@ -113,8 +119,10 @@ class MongoDBInterface(DatabaseInterface):
         :param token:
         :return true if account activated, false if not
         """
-        result = self.rentalDb["User"].update_one({"_id": userId}, {"satus": "ACTIVE"})
-        return result.upserted_id  # None, or id of user
+        result = self.rentalDb["User"].update_one({"_id": userId}, {'$set': {"status": "ACTIVE"}})
+        if result.modified_count == 0:
+            return False
+        return result.upserted_id
 
     def getUser(self, userId):
         """
@@ -135,53 +143,60 @@ class MongoDBInterface(DatabaseInterface):
         :return true if successful, false if not
 
         """
-        pass
+        result = self.rentalDb["User"].update_one({"_id": userId}, {'$set': {"activationCode": token}})
+        if result.modified_count == 0:
+            return False
+        return True
 
     def changePassword(self, userId, newPwd):
-        user = self.rentalDb["User"].find_one({"_id": userId, "password": oldPwd})
-        if user is None:
-            return None
+        result = self.rentalDb["User"].update_one(
+            {"_id": userId},
+            {'$set': {"password": bcrypt.hashpw(newPwd, salt)}})
+        if result.modified_count == 0:
+            return False
+        return True
 
-        result = self.rentalDb["User"].update_one({"_id": userId}, {"password": newPwd})
-        return result.upserted_id  # None, or id of user
-
-    def updateLocation(self, userId, location: tuple[str, str]):
-        pass  # TODO: useless?
+    def updateLocation(self, carId, location: tuple[str, str]): # TODO: check coords?
+        result = self.rentalDb["Car"].update_one(
+            {"_id": carId},
+            {'$set': {"currentLocationLat": location[0], "currentLocationLong": location[1]}})
+        return result.modified_count != 0
 
     def rentalHistory(self, userId, pageIndex, pageLength):
         rentals = []
-        for rental in self.rentalDb["User"].find({"_id": userId}, {"rentals"}):
-            rentals.append(Rental.from_dict(rental))
-        return rentals
+        for rentalId in self.rentalDb["User"].find_one({"_id": userId}, {"rentalArchive": 1})["rentalArchive"]:
+            rental = self.rentalDb["RentalArchive"].find_one({"_id": rentalId})
+            if rental is not None:
+                rentals.append(Rental.from_dict(rental))
+        return rentals[pageIndex:pageIndex+pageLength]
 
     def getCards(self, userId):
         cards = []
-        for card in self.rentalDb["User"].find({"_id": userId}, {"creditCards"}):
+        for card in self.rentalDb["User"].find_one({"_id": userId}, {"CreditCards": 1})["CreditCards"]:
             cards.append(CreditCard.from_dict(card))
         return cards
 
-    def addCard(self, userId, card):
-
-        added = self.rentalDb["CreditCard"].insert_one(
-            {
-                "cardNumber": cardNumber,
-                "expirationDate": expirationDate,
-                "cardHolderName": cardHolder,
-                "holderAddress": holderAddress,
-            }
-        )
-        if added.inserted_id is None: return None  # TODO: add to user
+    def addCard(self, userId, card: CreditCard):
+        result = self.rentalDb["User"].update_one({"_id": userId}, {'$push': {"CreditCards": {
+            "_id": ObjectId(),
+            "cardNumber": card.cardNumber,
+            "expirationDate": card.expirationDate,
+            "cardHolderName": card.cardHolderName,
+            "cardHolderAddress": card.cardHolderAddress
+            }}})
+        return result.modified_count != 0
 
     def deleteCard(self, userId, cardId):
-        pass
+        result = self.rentalDb["User"].update_one({"_id": userId}, {'$pull': {"CreditCards": {
+            "_id": cardId
+            }}})
+        return result.modified_count != 0
 
-    def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
+    def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]: 
         def fun():
             return calculate_gps_distance((float(location[0]), float(location[1])),
                                           (float(self.currentLocationLat), float(
                                               self.currentLocationLong))) <= distance
-            # TODO: To musisz pobrać od Usera, albo w sumie możemy przesyłać jako argument. Do omówienia
-
         cars = []
         for car in self.rentalDb["Car"].find(fun()):  # TODO: check if this fuckery works
             cars.append(Car.from_dict(car))
@@ -193,19 +208,48 @@ class MongoDBInterface(DatabaseInterface):
         pass
 
     def getCar(self, carId):
-        pass
+        car = self.rentalDb["Car"].find_one({"_id": carId})
+        if car is None:
+            return None
+        return Car.from_dict(car)
 
     def getLocation(self, locationId):
-        pass
+        location = self.rentalDb["Location"].find_one({"_id": locationId})
+        if location is None:
+            return None
+        return Car.from_dict(location)
 
     def getReservation(self, userId, reservationId):
-        pass
+        reservation = self.rentalDb["User"].find_one({"_id": userId}, {"reservation": 1})
+        if reservation is None or reservation["_id"] != reservationId:
+            return None
+        result = Reservation.from_dict(reservation)
+        result.userId = userId
+        return result
 
-    def endReservation(self, reservation: Reservation):
-        pass
+    def endReservation(self, reservation:Reservation):
+        reservation_ = self.rentalDb["User"].find_one({"_id": reservation.userId}, {"reservation": 1})
+        if reservation_ is None or reservation_["_id"] != reservation.carId:
+            return False
+        self.rentalDb["User"].find_and_modify({"_id": reservation.userId}, {'$unset': {"reservation": ""}})
+        self.rentalDb["Car"].find_and_modify({"_id": reservation_["car"]}, {'$set': {"status": "ACTIVE"}})
+        return True
 
     def startReservation(self, reservation: Reservation):
-        pass
+        if self.rentalDb["Car"].find_one({"_id": reservation.carId})["status"] != "ACTIVE": 
+            return False
+        user = self.rentalDb["User"].find_one({"_id": reservation.userId})
+        if user["currentRental"] != "" or user["reservation"] != "":
+            return False
+        self.rentalDb["User"].find_and_modify({"_id": reservation.userId}, 
+                {"$set": {"reservation": {
+                    "_id": ObjectId(),
+                    "reservationStart": reservation.reservationStart,
+                    "reservationsEnd": reservation.reservationEnd,
+                    "car": reservation.carId
+                }}})
+        self.rentalDb["Car"].find_and_modify({"_id": reservation.carId}, {"$set": {"status": "RESRVED"}})
+        return True
 
     def startRental(self, userId, carId):
         pass
@@ -269,6 +313,5 @@ class MongoDBInterface(DatabaseInterface):
 
     def getServicesHistory(self, carId):
         pass
-
 
 RENTAL_DB = MongoDBInterface()

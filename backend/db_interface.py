@@ -91,9 +91,9 @@ class DatabaseInterface:
     def changePassword(self, userId, newPwd):
         pass
 
-    def updateLocation(self, userId, location: tuple[str, str]) -> bool:
+    def updateLocation(self, carId, location: tuple[str, str]) -> bool:
         """
-        :param userId:
+        :param carId:
         :param location: Tuple in form Latitude, Longitude
         :returns True if success false if not
         """
