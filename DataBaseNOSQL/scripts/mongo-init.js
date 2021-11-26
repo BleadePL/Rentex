@@ -104,10 +104,6 @@ db.createCollection( "Car", {
                 bsonType: "date",
                 description: "must be a date"
             },
-            lastService: {
-                bsonType: "date",
-                description: "must be a date"
-            },
             status: {
                 enum : ['ACTIVE','RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN'],
                 description: "must be ['ACTIVE','RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN'] and is required"
@@ -160,10 +156,6 @@ db.createCollection( "Car", {
                         }
                     }
                 }
-            },
-            reservation: {
-                bsonType: "int",
-                description: "must be an int"
             }
         }
     } }
@@ -230,42 +222,39 @@ db.createCollection( "User", {
                 enum: ["SERWISANT", "ADMIN", "CLIENT"],
                 description: 'must be ["SERWISANT", "ADMIN", "CLIENT"] string'
             },
-            rentals: {
-                bsonType: "array",
-                uniqueItems: true,
-                items: {
-                    bsonType: "object",
-                    required: [ "rentalStart", "car", "ended"],
-                    properties: {
-                        rentalStart: {
-                            bsonType: "date",
-                            description: "must be a date and is required"
-                        },
-                        rentalEnd: {
-                            bsonType: "date",
-                            description: "must be a date"
-                        },
-                        mileage: {
-                            bsonType: "int",
-                            description: "must be an int"
-                        },
-                        totalCost: {
-                            bsonType: "string",
-                            description: "must be a string"
-                        },
-                        ended: {
-                            bsonType: "bool",
-                            description: "must be a bool"
-                        },
-                        car: {
-                            bsonType: "int"
-                        }
+            currentRental: {
+                bsonType: "object",
+                required: [ "rentalStart", "car", "ended"],
+                properties: {
+                    rentalStart: {
+                        bsonType: "date",
+                        description: "must be a date and is required"
+                    },
+                    rentalEnd: {
+                        bsonType: "date",
+                        description: "must be a date"
+                    },
+                    mileage: {
+                        bsonType: "int",
+                        description: "must be an int"
+                    },
+                    totalCost: {
+                        bsonType: "string",
+                        description: "must be a string"
+                    },
+                    ended: {
+                        bsonType: "bool",
+                        description: "must be a bool and is required"
+                    },
+                    car: {
+                        bsonType: "int",
+                        description: "must be an int and is required"
                     }
                 }
             },
             reservation: {
                 bsonType: "object",
-                required: [ "reservationStart", "reservationEnd", "reservationCost"],
+                required: [ "reservationStart", "reservationEnd", "reservationCost", "car"],
                 properties: {
                     reservationStart: {
                         bsonType: "date",
@@ -280,7 +269,8 @@ db.createCollection( "User", {
                         description: "must be a string and is required"
                     },
                     car: {
-                        bsonType: "int"
+                        bsonType: "int",
+                        description: "must be an int and is required"
                     }
                 }
             },
@@ -288,7 +278,7 @@ db.createCollection( "User", {
                 bsonType: "array",
                 items: {
                     bsonType: "object",
-                    required: [ "cardNumber", "expirationDate", "cardHolderName", "cardHolderAddress", "cardHolder"],
+                    required: [ "cardNumber", "expirationDate", "cardHolderName", "cardHolderAddress"],
                     properties: {
                         cardNumber: {
                             bsonType: "string",
@@ -309,7 +299,7 @@ db.createCollection( "User", {
                     }
                 }
             },
-            services: {
+            rentalArchive: {
                 bsonType: "array",
                 uniqueItems: true,
                 items: {
@@ -348,12 +338,6 @@ db.createCollection( "Location", {
             locationLong: {
                 bsonType: "string",
                 description: "must be a string and is required"
-            },
-            services: {
-                bsonType: "array",
-                items: {
-                    bsonType: "int"
-                }
             }
         }
     } }
@@ -370,100 +354,29 @@ db.createCollection( "RentalArchive", {
             },
             rentalEnd: {
                 bsonType: "date",
-                description: "must be a date"
+                description: "must be a date and is required"
             },
             mileage: {
                 bsonType: "int",
-                description: "must be an int"
+                description: "must be an int and is required"
             },
             totalCost: {
                 bsonType: "string",
-                description: "must be a string"
+                description: "must be a string and is required"
             },
             ended: {
                 bsonType: "bool",
-                description: "must be a bool"
+                description: "must be a bool and is required"
             },
             car: {
-                bsonType: "object",
-                required: ["brand","vin","regCountryCode","regNumber","modelName","mileage","activationCost","kmCost","timeCost"],
-                properties: {
-                    brand: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    vin: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    regCountryCode: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    regNumber: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    modelName: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    mileage: {
-                        bsonType : "int",
-                        description: "must be an int and is required"
-                    },
-                    activationCost: {
-                        bsonType: "string",
-                        description: "must be a string and is required"
-                    },
-                    kmCost: {
-                        bsonType: "string",
-                        description: "must be a string and is required"
-                    },
-                    timeCost: {
-                        bsonType: "string",
-                        description: "must be a string and is required"
-                    },
-                },
+                bsonType: "int",
+                description: "must be an int and is required"
             },
             renter: {
-                bsonType: "object",
-                required: [ "pesel","name","surname","address","email","accountType"],
-                properties: {
-                    pesel: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    surname: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    name: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    address: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    driverLicenceNumber: {
-                        bsonType: "string",
-                        description: "must be a string"
-                    },
-                    driverLicenceExpirationDate: {
-                        bsonType: "date",
-                        description: "must be a string"
-                    },
-                    email: {
-                        bsonType : "string",
-                        description: "must be a string and is required"
-                    },
-                    accountType: {
-                        enum: ["PERSONAL", "COMPANY", "ORGANISATION", "UNKNOWN"],
-                        description: "must be [PERSONAL, COMPANY, ORGANISATION, UNKNOWN] and is required"
-                    },
-                }
+                bsonType: "int",
+                description: "must be an int and is required"
             }
-        
         }   
-}}} );
+    } }   
+} 
+);
