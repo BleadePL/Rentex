@@ -6,8 +6,8 @@ from flask import Flask, Response
 from flask_login import LoginManager
 
 from backend.database_access import RENTAL_DB
-from backend.models import Rental, Car, Reservation
-from backend.utils import calculate_gps_distance, gr_to_pln_gr
+from backend.models import Rental, Car, Reservation, CreditCard
+from backend.utils import calculate_gps_distance, gr_to_pln_gr, charge_card
 
 import schedule
 
@@ -37,7 +37,8 @@ class LoggedInUser:
 class PendingRental:
     DISTANCE_THRESHOLD = 10
 
-    def __init__(self, rent: Rental, kmCost: str, timeCost: str, activationCost: str, startLong, startLat):
+    def __init__(self, rent: Rental, kmCost: str, timeCost: str, activationCost: str, startLong, startLat,
+                 paymentType: str, cvv: int, card: CreditCard):
         self.rent = rent
         s = kmCost.split(".")
         self.kmCost = int(s[1]) + int(s[0]) * 100
@@ -48,6 +49,9 @@ class PendingRental:
         self.distance = 0
         self.lastLong = startLong
         self.lastLat = startLat
+        self.paymentType = paymentType
+        self.cvv = cvv
+        self.card = card
 
     def __eq__(self, other):
         if other is PendingRental:
@@ -60,10 +64,9 @@ class PendingRental:
         if d > PendingRental.DISTANCE_THRESHOLD:
             self.distance += d
 
-    def calculate_current_cost(self) -> str:
-
+    def calculate_current_cost(self) -> int:
         timeCost = (int(time.time()) - self.rent.rentalStart) * self.timeCost
-        return gr_to_pln_gr(int(self.activationCost + timeCost + (self.distance / 1000) * self.kmCost))
+        return int(int(self.activationCost + timeCost + (self.distance / 1000) * self.kmCost))
 
 
 class RentalReservationTimerTask:
@@ -81,36 +84,52 @@ class RentalReservationTimerTask:
             if time.time() - e.reservationStart > MAX_RESERVATION_TIME or e.ended:
                 self.endReservation(e)
 
-    def rent(self, car: Car, user_id) -> bool:
+    def rent(self, car: Car, user_id, payment_method, cvv: int = None, card: CreditCard = None) -> [None, str]:
         r = Rental(car_id=car._id, rental_start=int(time.time()), ended=False, client_id=user_id, mileage=0,
                    rental_cost="")
-        p = PendingRental(r, car.kmCost, car.timeCost, car.activationCost, car.currentLocationLong,
-                          car.currentLocationLat)
-        self.active_rentals.append(p)
-        return RENTAL_DB.startRental(userId=user_id, rent=r)
+        p = PendingRental(rent=r, kmCost=car.kmCost, timeCost=car.timeCost, activationCost=car.activationCost,
+                          startLong=car.currentLocationLong,
+                          startLat=car.currentLocationLat, paymentType=payment_method, cvv=cvv, card=card)
+        if payment_method == "PP":
+            if RENTAL_DB.getBalance(user_id) < MINIMAL_BALANCE:
+                return None
+        rentalId = RENTAL_DB.startRental(userId=user_id, rent=r)
+        if rentalId is not None:
+            self.active_rentals.append(p)
+        return None
 
-    def endRent(self, rent: Rental) -> bool:
-        if rent not in self.active_rentals:
-            return False
-        r: PendingRental = next(x for x in self.active_rentals if x.rent._id == rent._id)
+    def endRent(self, r_id) -> bool:
+        r: PendingRental = next(x for x in self.active_rentals if x.rent._id == r_id)
         if r is None:
             return False
+        cost = r.calculate_current_cost()
+        if not charge_card(cost, r.paymentType == "PP", r.card, r.cvv, r.rent.userId):
+            return False
         self.active_rentals.remove(r)
-        rent.ended = True
-        rent.rentalEnd = int(time.time())
-        rent.mileage = r.distance
-        rent.rentalCost = r.calculate_current_cost()
-        return RENTAL_DB.endRental(rent)
+        r.rent.ended = True
+        r.rent.rentalEnd = int(time.time())
+        r.rent.mileage = r.distance
+        r.rent.rentalCost = gr_to_pln_gr(cost)
+        return RENTAL_DB.endRental(r.rent)
 
-    def startReservation(self, car_id, user_id) -> bool:
+    def startReservation(self, car_id, user_id) -> str:
         r = Reservation(car_id=car_id, user_id=user_id, reservation_start=int(time.time()))
+        res_id = RENTAL_DB.startReservation(r)
+        if res_id is None:
+            return None
         self.active_reservations.append(r)
-        return RENTAL_DB.startReservation(r)
+        return res_id
 
-    def endReservation(self, reservation: Reservation):
-        reservation.reservationEnd = int(time.time())
-        self.active_reservations.remove(reservation)
-        return RENTAL_DB.endReservation(reservation)
+    def endReservation(self, res_id: str):
+        res = next(x for x in self.active_rentals if x._id == res_id)
+        if res is None:
+            return False
+        res.reservationEnd = int(time.time())
+        self.active_reservations.remove(res)
+        return RENTAL_DB.endReservation(res)
+
+    def getRental(self, rent_id):
+        return next(x for x in self.active_rentals if x.rent._id == rent_id)
 
 
 app: Flask
@@ -119,6 +138,7 @@ BAD_REQUEST: tuple
 EMPTY_OK: tuple
 rental_timer_task: RentalReservationTimerTask
 MAX_RESERVATION_TIME = 300
+MINIMAL_BALANCE = 10
 
 print(__name__)
 if __name__ == "flask_main":

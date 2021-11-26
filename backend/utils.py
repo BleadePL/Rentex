@@ -1,6 +1,9 @@
 import math
 import re
 
+from backend.database_access import RENTAL_DB
+from backend.models import CreditCard, User
+
 
 def parse_required_fields(json, fields):
     parsed = {}
@@ -71,3 +74,31 @@ def calculate_gps_distance(coord1, coord2):
 
 def gr_to_pln_gr(gr: int) -> str:
     return "" + str(int(gr / 100)) + "." + str(gr % 100)
+
+
+def pln_gr_to_gr(pln_gr: str) -> int:
+    s = pln_gr.split(".")
+    return int(s[0]) * 100 + int(s[1])
+
+
+def execute_card_charge(cardNumber, cardExpiration, cvv, holder, address) -> bool:
+    return True
+
+
+def charge_card(rentalCostGr: int, chargeBalance: bool = False, card: CreditCard = None, cvv: int = 0,
+                userId: str = None):
+    if chargeBalance:
+        if userId is None:
+            return False
+        user = RENTAL_DB.getUser(userId)
+        if user is None:
+            return False
+        balance = pln_gr_to_gr(user.balance)
+        if balance < rentalCostGr:
+            return False
+        return RENTAL_DB.setNewBalance(userId, gr_to_pln_gr(balance - rentalCostGr))
+    else:
+        if cvv == 0 or card is None:
+            return False
+        return execute_card_charge(card.cardNumber, card.expirationDate, cvv, card.cardHolderName,
+                                   card.cardHolderAddress)

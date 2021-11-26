@@ -170,7 +170,7 @@ class Rental:
         :type ended: bool
         """
         self._id = rental_id
-        self.clientId = client_id
+        self.userId = client_id
         self.carId = car_id
         self.rentalStart = rental_start
         self.rentalEnd = rental_end

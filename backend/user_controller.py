@@ -105,6 +105,16 @@ def getCard(card_id: str):
     }
 
 
+@app.route("/user/card/<card_id>/charge", method=["POST"])
+@login_required
+def charge(card_id: str):
+    if request.json is None or "balance" not in request.json or "cvv" not in request.json:
+        return BAD_REQUEST
+    card = RENTAL_DB.getCard(current_user.get_id(), card_id)
+    if card is None:
+        return BAD_REQUEST
+
+
 @app.route("/user/card/<card_id>", methods=["DELETE"])
 @login_required
 def deleteCard(card_id: str):

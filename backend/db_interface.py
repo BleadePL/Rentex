@@ -150,7 +150,13 @@ class DatabaseInterface:
         """
         pass
 
-    def getReservation(self, userId, reservationId):
+    def getReservation(self, userId, reservationId) -> Reservation:
+        """
+
+        :param userId:
+        :param reservationId:
+        :returns None if any error or validation error, Reservation if its okey
+        """
         pass
 
     def endReservation(self, reservation: Reservation) -> bool:
@@ -161,24 +167,30 @@ class DatabaseInterface:
         """
         pass
 
-    def startReservation(self, reservation: Reservation) -> bool:
+    def startReservation(self, reservation: Reservation) -> str:
         """
-
+        Chek here, if there is no pending reservation
         :param reservation: Reservation object, ready to stripped and put into DB
-        :return True if success, false if not
+        :return Reservation id, or None
         """
         pass
 
-    def startRental(self, userId, rent: Rental) -> bool:
+    def startRental(self, userId, rent: Rental) -> None:
         """
-
+        Check here, if there is no pending rental
         :param userId: User ID
         :param rent: Already calculated Rental. Only strip down Client_id
-        :returns true if success, false if not
+        :returns rentalID if success, None if failed
         """
         pass
 
-    def getRental(self, userId, rentalId):
+    def getRental(self, userId, rentalId) -> Rental:
+        """
+
+        :param userId:
+        :param rentalId:
+        :returns Rental if found, None if not
+        """
         pass
 
     def endRental(self, rent: Rental) -> bool:
@@ -274,5 +286,21 @@ class DatabaseInterface:
         :param user_id:
         :param card_id:
         :returns None if card not found or card is not a user card, CreditCard if it's okey
+        """
+        pass
+
+    def setNewBalance(self, user_id, new_balance) -> bool:
+        """
+        :param user_id:
+        :param new_balance:
+        :returns True if success, false if not
+        """
+        pass
+
+    def getBalance(self, user_id) -> int:
+        """
+
+        :rtype: int
+        :returns positive balance if success, -1 if not success
         """
         pass
