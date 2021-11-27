@@ -198,7 +198,7 @@ class API_Session{
 
     /**
      *
-     * @param success {function(string): void}
+     * @param success {function(string): void} ACTIVE - Aktywne konto, INACTIVE - nieaktwyne konto, DOCUMENTS - Brak dokumentow, PENDING - wyslano dokumenty, oczekiwanie na potwierdzenie, PAYMENT - Brak srodkow na koncie, ADMIN - administrator, LOCKED - konto zablokowane, DELETED - konto usuniete
      * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
@@ -277,7 +277,290 @@ class API_Session{
         return unimplemented
     }
 
+    /**
+     *
+     * @param success {function(json): void} USER Object
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getUserDetails(success, auth_failed){
 
+    }
+
+    /**
+     *
+     * @param oldPass
+     * @param newPass
+     * @param success {function(): void}
+     * @param failed {function(string): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async changeUserPassword(oldPass, newPass, success, failed, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param locationLatitude
+     * @param locationLongitude
+     * @param success {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async updateLocation(locationLatitude, locationLongitude, success, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param pageIndex
+     * @param pageLength
+     * @param success {function(json): void} list of rentals
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async rentalHistory(pageIndex, pageLength, success, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param success {function(json): void} list of cards
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getCards(success, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param cardNumber
+     * @param expirationDate
+     * @param cardHolder
+     * @param cvv
+     * @param holderAddress
+     * @param success {function(string): void} CARD ID
+     * @param failed {function(): void} AUTH_ERROR - blad autoryzacji karty, BLOCK_ERROR - blad przetwarzania transakcji, UNKNOWN - inny blad
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async addCard(cardNumber, expirationDate, cardHolder, cvv, holderAddress, success, failed, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param cardId
+     * @param success {function(json): void} Card with details: lastdigits, expirations and holderName
+     * @param failed {function(): void}
+     * @param auth_failed
+     * @returns {Promise<void>}
+     */
+    async getCard(cardId, success, failed, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param cardId
+     * @param success {function(): void}
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async deleteCard(cardId, success, failed, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param cardId
+     * @param success {function(): void}
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async chargeCard(cardId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param locationLat
+     * @param locationLong
+     * @param distance
+     * @param success {function(json): void} list of cars
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getNearestCars(locationLat, locationLong, distance, success, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param locationLat
+     * @param locationLong
+     * @param distance
+     * @param success {function(json): void} List of locations
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getNearestLocations(locationLat, locationLong, distance, success, auth_failed){
+
+    }
+
+    /**
+     *
+     * @param carId
+     * @param success {function(json): void} Car
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async browseCar(carId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param locationId
+     * @param success {function(json): void} Location
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async browseLocation(locationId, success, failed, auth_failed)
+    {
+
+    }
+
+
+    /**
+     *
+     * @param resId reservation Id
+     * @param success {function(json): void} Reservation object
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getReservation(resId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param resId reservation Id
+     * @param success {function(): void}
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async endReservation(resId, success, failed, auth_failed)
+    {
+
+    }
+
+
+
+    /**
+     *
+     * @param carId
+     * @param success {function(string): void} Reservation ID
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async reservate(carId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param carId
+     * @param cvv
+     * @param paymentType PP or ID of creditcard
+     * @param success {function(string): void} Rental ID
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async rent(carId, cvv, paymentType, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param rentalId
+     * @param success {function(json): void} Rental object
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getRental(rentalId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param rentalId Rental ID
+     * @param success {function(): void}
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async endRental(rentalId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param carId
+     * @param success {function(string): void} Service ID
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async service(carId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param serviceId
+     * @param success {function(json): void} Service object
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getService(serviceId, success, failed, auth_failed)
+    {
+
+    }
+
+    /**
+     *
+     * @param serviceId Service ID
+     * @param success {function(): void}
+     * @param failed {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async endService(serviceId, success, failed, auth_failed)
+    {
+
+    }
 }
 
 export default API_Session;
