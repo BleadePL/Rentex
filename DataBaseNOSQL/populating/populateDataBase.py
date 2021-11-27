@@ -1,6 +1,7 @@
 import random
 import string
 import datetime
+from bson.objectid import ObjectId
 from cryptography.fernet import Fernet
 from datetime import timedelta
 
@@ -8,12 +9,15 @@ key = b'OuEWaMtiLkNuedzPZQsMnnOwhXm4KDoNm-FkWscoNkA='
 cipher_suite = Fernet(key)
 
 def generateCars(howMany:int):
-    retList = []
+    retList = ([],[])
     brands = ['Mercedes', 'BMW', 'Volkswagen', 'KIA', 'Hyundai', 'FIAT', 'Porsche']
     modelNames = ['Passat', 'golf', 'i30', 'i20', 'focus', 'fiesta', 'kangoo', '330i', '520d', 'sls', 'sla', 'cls', 'optima', '911', 'cayman', 'punto', '500']
-    status = ['ACTIVE']*5 + ['RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN']
+    status = ['ACTIVE']*5 #+ ['RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN']
     for _ in range(howMany):
-        retList.append({
+        id = ObjectId()
+        retList[1].append(id)
+        retList[0].append({
+            '_id': id,
             'brand': brands[random.randint(0, len(brands)-1)],
             'vin': ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(17)),
             'regCountryCode': 'PL',
@@ -36,13 +40,16 @@ def generateCars(howMany:int):
 
 
 def generateUsers(howMany:int):
-    retList = []
+    retList = ([],[])
     balances = ['0.00', '2.59']
     accountTypes = ["PERSONAL", "COMPANY", "ORGANISATION", "UNKNOWN"]
     statuses = ["ACTIVE"]*8 +["INACTIVE","DOCUMENTS","PENDING","PAYMENT","LOCKED","DELETED"]
     roles = ["SERWISANT", "ADMIN"] + ["CLIENT"]*10
     for _ in range(howMany):
-        retList.append({
+        id = ObjectId()
+        retList[1].append(id)
+        retList[0].append({
+            '_id': id,
             'pesel': ''.join(random.choice(string.digits) for _ in range(11)),
             'name': ''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 30))),
             'surname': ''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 30))),
@@ -56,25 +63,37 @@ def generateUsers(howMany:int):
             'accountType': accountTypes[random.randint(0, len(accountTypes)-1)],
             'status':  statuses[random.randint(0, len(statuses)-1)],
             'role':  roles[random.randint(0, len(roles)-1)],
+            'creditCards': []
         })
     return retList
 
-def generateCreditCards(howMany:int):
-    retList = []
+def generateCreditCards(howMany:int, users):
+    retList = ([],[])
     for _ in range(howMany):
-        retList.append({
+        id = ObjectId()
+        retList[1].append(id)
+        card = {
+            '_id': id,
             'cardNumber': ''.join(random.choice(string.digits) for _ in range(11)),
             'expirationDate': datetime.datetime.now() + timedelta(days=random.randint(1, 10)*365),
             'cardHolderName': ''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 30))) + " " + ''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 30))),
             "cardHolderAddress":''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 255))),
-        })
+        }
+        retList[0].append(card)
+        userId = random.randint(0, len(users)-1)
+        while users[userId]["status"] != "ACTIVE":
+            userId = random.randint(0, len(users)-1)
+        users[userId]["creditCards"].append(card)
     return retList
 
 def generateLocations(howMany:int):
-    retList = []
+    retList = ([],[])
     locationTypes = ["STATION","CLEAN","SERVICE","SPECIAL_POINT","UNKNOWN"]
     for _ in range(howMany):
-        retList.append({
+        id = ObjectId()
+        retList[1].append(id)
+        retList[0].append({
+            '_id': id,
             'locationType':locationTypes[random.randint(0, len(locationTypes)-1)],
             'locationAddress':''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 255))),
             'leaveReward':str(round(random.uniform(20.00, 50.00), 2)),
@@ -83,25 +102,15 @@ def generateLocations(howMany:int):
         })
     return retList
 
-def populateDataBase(howManyCars, howManyUsers, howManyCreditCards, howManyLocations):
-    from pymongo import MongoClient
-    client = MongoClient(port=27017)
-    db=client.mongodb
-
+def populateDataBase(db, howManyCars, howManyUsers, howManyCreditCards, howManyLocations):
     cars = generateCars(howManyCars)
     users = generateUsers(howManyUsers)
-    creditCards = generateCreditCards(howManyCreditCards)
+    creditCards = generateCreditCards(howManyCreditCards, users[0])
     locations = generateLocations(howManyLocations)
 
-    print(cars)
-    print(users)
-    print(creditCards)
-    print(locations)
-    for car in cars:
+    for car in cars[0]:
         db.Car.insert_one(car)
-    for user in users:
+    for user in users[0]:
         db.User.insert_one(user)
-    for cc in creditCards:
-        db.CreditCard.insert_one(cc)
-    for location in locations:
+    for location in locations[0]:
         db.Location.insert_one(location)
