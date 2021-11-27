@@ -106,6 +106,7 @@ def generateLocations(howMany:int):
         retList[0].append({
             '_id': id,
             'locationType':locationTypes[random.randint(0, len(locationTypes)-1)],
+            'locationName':''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 255))),
             'locationAddress':''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(5, 255))),
             'leaveReward':str(round(random.uniform(20.00, 50.00), 2)),
             'locationLat':str(round(random.uniform(51.067883, 51.149147), 6)),
@@ -132,22 +133,58 @@ def generateRentals(howMany, userIds, carIds):
         })
     return retList
 
-def populateDataBase(db, howManyCars, howManyUsers, howManyCreditCards, howManyLocations, howManyRentals):
+from pymongo import MongoClient
+def populateDataBase(db:MongoClient, howManyCars, howManyUsers, howManyCreditCards, howManyLocations, howManyRentals):
     cars = generateCars(howManyCars)
     users = generateUsers(howManyUsers)
     creditCards = generateCreditCards(howManyCreditCards, users[0])
     locations = generateLocations(howManyLocations)
     rentals = generateRentals(howManyRentals,users[1], cars[1])
 
-    for i,car in enumerate(cars[0]):
-        db.Car.insert_one(car)
-        print(f"car: {i} of {howManyCars}")
-    for i,user in enumerate(users[0]):
-        db.User.insert_one(user)
-        print(f"user: {i} of {howManyUsers}")
-    for i,location in enumerate(locations[0]):
-        db.Location.insert_one(location)
-        print(f"location: {i} of {howManyLocations}")
-    for i,rental in enumerate(rentals[1]):
-        db.RentalArchive.insert_one(rental)
-        print(f"rental: {i} of {howManyRentals}")
+    res = db["Car"].insert_many(cars[0])
+    print(len(res.inserted_ids))
+    res = db["User"].insert_many(users[0])
+    print(len(res.inserted_ids))
+    res = db["Location"].insert_many(locations[0])
+    print(len(res.inserted_ids))
+    res = db["RentalArchive"].insert_many(rentals[0])
+    print(len(res.inserted_ids))
+    # for i,car in enumerate(cars[0]):
+    #     res = db["Car"].insert_one(car)
+    #     print(f"car: {i} of {howManyCars}, id: {res.inserted_id}")
+    #     db["Car"].find_one({"_id": res.inserted_id})
+    # for i,user in enumerate(users[0]):
+    #     db["User"].insert_one(user)
+    #     print(f"user: {i} of {howManyUsers}")
+    # for i,location in enumerate(locations[0]):
+    #     db["Location"].insert_one(location)
+    #     print(f"location: {i} of {howManyLocations}")
+    # for i,rental in enumerate(rentals[0]):
+    #     db["RentalArchive"].insert_one(rental)
+    #     print(f"rental: {i} of {howManyRentals}")
+
+
+HOSTNAME = "vps.zgrate.ovh"
+PORT = "27017"
+USERNAME = "backend"
+PASSWORD = "backendpwd"
+DB_NAME = "rental"
+
+
+client = MongoClient("mongodb://" + USERNAME + ":" + PASSWORD + "@" + HOSTNAME + ":" + PORT + "/", connect=True)
+rentalDb = client[DB_NAME]
+v =rentalDb["Car"].delete_many({})
+print(v.deleted_count)
+v =rentalDb["User"].delete_many({})
+print(v.deleted_count)
+v =rentalDb["Location"].delete_many({})
+print(v.deleted_count)
+v =rentalDb["RentalArchive"].delete_many({})
+print(v.deleted_count)
+populateDataBase(rentalDb, 30, 1000, 300, 10, 3500)
+# for car in rentalDb["Car"].find():
+#     print(car)
+# for user in rentalDb["User"].find():
+#     print(user)
+# for rental in rentalDb["RentalArchive"].find():
+#     print(rental)
