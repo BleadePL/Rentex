@@ -204,7 +204,7 @@ class DatabaseInterface:
     def adminActive(self, userId):
         pass
 
-    def acceptDocuments(self):
+    def acceptDocuments(self, userId):
         pass
 
     def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):

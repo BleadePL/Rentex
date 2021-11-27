@@ -7,7 +7,7 @@ from flask_login import LoginManager
 
 from backend.database_access import RENTAL_DB
 from backend.models import Rental, Car, Reservation, CreditCard
-
+from flask_cors import CORS
 import schedule
 
 
@@ -146,6 +146,7 @@ if __name__ == "flask_main":
     app = Flask("Wypozyczalnia Aut BACKEND")
     app.secret_key = secrets.token_hex()
     login = LoginManager(app)
+    cors = CORS(app)
     BAD_REQUEST = {}, 400
     EMPTY_OK = {}, 200
 
@@ -162,6 +163,7 @@ if __name__ == "flask_main":
     def loop():
         while True:
             schedule.run_pending()
+            time.sleep(1)
 
 
     threading.Thread(target=loop).start()

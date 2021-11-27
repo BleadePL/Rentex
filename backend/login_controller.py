@@ -39,13 +39,19 @@ def loginToSystem():
     if parsed is None:
         return BAD_REQUEST
     l = parsed["login"]
-    pas = parsed["password"]
-    user_id = RENTAL_DB.authUser(l, pas)
+    pas: str = parsed["password"]
+    # TODOREMOVE
+    if l == "test" and pas == "test":
+        user_id = "test123"
+    else:
+        user_id = RENTAL_DB.authUser(l, pas.encode("utf-8"))
     if user_id is not None:
+        u = next((user for user in logged_in_users if user.get_id() == user_id), None)
+        if u is not None:
+            logged_in_users.remove(u)
         token = secrets.token_hex()
         user = LoggedInUser(user_id, token)
         login_user(user)
-        global logged_in_users
         logged_in_users.append(user)
         return {'token': token}
     else:
@@ -130,6 +136,7 @@ def uploadPhoto():
 print("Login_controller" + __name__)
 
 if __name__ == "login_controller":
+    logged_in_users = [LoggedInUser("test123", "testTokenAdmin")]
     PHOTOS_TARGET = "licences"
     if not os.path.exists(PHOTOS_TARGET):
         os.mkdir(PHOTOS_TARGET)
