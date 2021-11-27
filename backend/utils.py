@@ -1,7 +1,6 @@
 import math
 import re
 
-from backend.database_access import RENTAL_DB
 from backend.models import CreditCard
 
 
@@ -86,7 +85,8 @@ def execute_card_charge(cardNumber, cardExpiration, cvv, holder, address) -> boo
 
 
 def charge_card(rentalCostGr: int, chargeBalance: bool = False, card: CreditCard = None, cvv: int = 0,
-                userId: str = None):
+                userId: str = None):           
+    from backend.database_access import RENTAL_DB
     if chargeBalance:
         if userId is None:
             return False
