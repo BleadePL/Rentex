@@ -8,6 +8,17 @@ from datetime import timedelta
 key = b'OuEWaMtiLkNuedzPZQsMnnOwhXm4KDoNm-FkWscoNkA='
 cipher_suite = Fernet(key)
 
+import datetime
+import random
+
+
+def random_date(start, end):
+    """Generate a random datetime between `start` and `end`"""
+    return start + datetime.timedelta(
+        # Get a random amount of seconds between `start` and `end`
+        seconds=random.randint(0, int((end - start).total_seconds())),
+    )
+
 def generateCars(howMany:int):
     retList = ([],[])
     brands = ['Mercedes', 'BMW', 'Volkswagen', 'KIA', 'Hyundai', 'FIAT', 'Porsche']
@@ -102,15 +113,41 @@ def generateLocations(howMany:int):
         })
     return retList
 
-def populateDataBase(db, howManyCars, howManyUsers, howManyCreditCards, howManyLocations):
+def generateRentals(howMany, userIds, carIds):
+    retList = ([],[])
+    for _ in range(howMany):
+        id = ObjectId()
+        retList[1].append(id)
+        start = random_date(datetime.datetime(year=2019, month=1, day=1), datetime.datetime(year=2021, month=11, day=27))
+        end = random_date(start, start + datetime.timedelta(hours = 1))
+        retList[0].append({
+            '_id': id,
+            'rentalStart': start,
+            'rentalEnd': end,
+            'mileage': random.randint(0, 30),
+            "totalCost":str(round(random.uniform(20.00, 50.00), 2)),
+            'ended': True,
+            'car':carIds[random.randint(0, len(carIds)-1)],
+            'renter':userIds[random.randint(0, len(userIds)-1)],
+        })
+    return retList
+
+def populateDataBase(db, howManyCars, howManyUsers, howManyCreditCards, howManyLocations, howManyRentals):
     cars = generateCars(howManyCars)
     users = generateUsers(howManyUsers)
     creditCards = generateCreditCards(howManyCreditCards, users[0])
     locations = generateLocations(howManyLocations)
+    rentals = generateRentals(howManyRentals,users[1], cars[1])
 
-    for car in cars[0]:
+    for i,car in enumerate(cars[0]):
         db.Car.insert_one(car)
-    for user in users[0]:
+        print(f"car: {i} of {howManyCars}")
+    for i,user in enumerate(users[0]):
         db.User.insert_one(user)
-    for location in locations[0]:
+        print(f"user: {i} of {howManyUsers}")
+    for i,location in enumerate(locations[0]):
         db.Location.insert_one(location)
+        print(f"location: {i} of {howManyLocations}")
+    for i,rental in enumerate(rentals[1]):
+        db.RentalArchive.insert_one(rental)
+        print(f"rental: {i} of {howManyRentals}")
