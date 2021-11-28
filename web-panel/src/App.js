@@ -122,15 +122,13 @@ function App() {
     }
   }
 
+
+
   const RentCar = () => {
 
   }
 
   const BrowseCars = () => {
-
-  }
-
-  const UserDescription = () =>{
 
   }
 
@@ -174,11 +172,20 @@ function App() {
                   <li><button name="browse-cars" onClick={BrowseCars}>Browse available cars</button></li>
                   <li><button name="reserved-car">Reserved car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
+                  <li><button name="change-passwd" onClick={() => navigate("/changePasswd")}>Change Password</button></li>
                   <li><button name="logout" onClick={Logout}>Logout</button></li>
                 </ul>
               </div>
           }/>
 
+          <Route path="/changePasswd" element={
+              <div>
+                  <div>
+                    <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
+                  </div>
+              </div>
+          }/>
+          
           <Route path="/userDescr" element={
               <div>
                 <DescriptionTable data={data}/>
