@@ -10,7 +10,7 @@ from backend.models import Rental, Car, Reservation, CreditCard
 from flask_cors import CORS
 import schedule
 
-TESTS = True
+TESTS = False
 
 class LoggedInUser:
     def __init__(self, user_id, session_token):
@@ -148,6 +148,7 @@ MAX_RESERVATION_TIME = 300
 MINIMAL_BALANCE = 10
 TOO_LONG_RENTAL_PUNISHMENT = 200
 MAX_RENTAL_TIME = 3600 * 24
+PHOTOS_TARGET: str
 
 
 def runTests():
@@ -177,7 +178,7 @@ if __name__ == "flask_main":
     cors = CORS(app)
     BAD_REQUEST = {}, 400
     EMPTY_OK = {}, 200
-
+    PHOTOS_TARGET = "licences"
     rental_timer_task = RentalReservationTimerTask()
     schedule.every().second.do(rental_timer_task.tick)
 
@@ -186,6 +187,7 @@ if __name__ == "flask_main":
     from service_controller import *
     from browse_controller import *
     from rent_controller import *
+    from admin_controller import *
 
 
     def loop():

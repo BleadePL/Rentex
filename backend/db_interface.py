@@ -199,7 +199,7 @@ class DatabaseInterface:
     def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):
         pass
 
-    def addCar(self, car: 'Car'):
+    def addCar(self, carDict: 'dict'):
         pass
 
     def deleteCar(self, carId):
@@ -226,7 +226,7 @@ class DatabaseInterface:
         """
         pass
 
-    def addLocation(self, location: Location):
+    def addLocation(self, location: dict) -> bool:
         pass
 
     def getLocations(self, pageIndex, pageCount, location: tuple[str, str], distance):

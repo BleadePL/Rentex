@@ -136,4 +136,4 @@ class Tests:
 
     @test
     def testBrowseNearestCar(self):
-        rv = self.client.post()
+        rv = self.client.get("/user/")

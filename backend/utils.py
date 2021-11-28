@@ -6,6 +6,8 @@ from backend.models import CreditCard
 
 
 def parse_required_fields(json, fields):
+    if json is None:
+        return None
     parsed = {}
     for f in fields:
         if f not in json:

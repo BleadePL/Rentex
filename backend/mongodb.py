@@ -352,7 +352,7 @@ class MongoDBInterface(DatabaseInterface):
             return None
         return cars[pageIndex: pageIndex+pageCount]
 
-    def addCar(self, car: 'Car'):
+    def addCar(self, carDict: 'dict'):
         pass
 
     def deleteCar(self, carId):
@@ -394,7 +394,7 @@ class MongoDBInterface(DatabaseInterface):
     def getUserRentalHistory(self, userId, pageIndex, pageLength):
         pass
 
-    def addLocation(self, location: Location):
+    def addLocation(self, location: dict) -> bool:
         pass
 
     def getLocations(self, pageIndex, pageCount, location: tuple[str, str], distance):

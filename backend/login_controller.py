@@ -9,7 +9,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from backend.db_interface import DatabaseInterface
 from backend.utils import parse_required_fields
 from database_access import RENTAL_DB
-from flask_main import app, login, EMPTY_OK, BAD_REQUEST, LoggedInUser
+from flask_main import app, login, EMPTY_OK, BAD_REQUEST, LoggedInUser, PHOTOS_TARGET
 
 RENTAL_DB: DatabaseInterface
 
@@ -138,6 +138,6 @@ print("Login_controller" + __name__)
 
 if __name__ == "login_controller":
     logged_in_users = [LoggedInUser("test123", "testTokenAdmin")]
-    PHOTOS_TARGET = "licences"
+
     if not os.path.exists(PHOTOS_TARGET):
         os.mkdir(PHOTOS_TARGET)
