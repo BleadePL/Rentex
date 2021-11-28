@@ -12,7 +12,6 @@ import schedule
 
 TESTS = True
 
-
 class LoggedInUser:
     def __init__(self, user_id, session_token):
         self.id = user_id
@@ -39,7 +38,7 @@ class PendingRental:
     DISTANCE_THRESHOLD = 10
 
     def __init__(self, rent: Rental, kmCost: str, timeCost: str, activationCost: str, startLong, startLat,
-                 paymentType: str, cvv: int, card: CreditCard):
+                 paymentType: str, cvv: int, card: CreditCard, overtime: bool):
         self.rent = rent
         s = kmCost.split(".")
         self.kmCost = int(s[1]) + int(s[0]) * 100
@@ -53,6 +52,7 @@ class PendingRental:
         self.paymentType = paymentType
         self.cvv = cvv
         self.card = card
+        self.overtime = overtime
 
     def __eq__(self, other):
         if other is PendingRental:
@@ -68,7 +68,8 @@ class PendingRental:
 
     def calculate_current_cost(self) -> int:
         timeCost = (int(time.time()) - self.rent.rentalStart) * self.timeCost
-        return int(int(self.activationCost + timeCost + (self.distance / 1000) * self.kmCost))
+        return int(int(self.activationCost + timeCost + (
+                    self.distance / 1000) * self.kmCost)) + TOO_LONG_RENTAL_PUNISHMENT if self.overtime else 0
 
 
 class RentalReservationTimerTask:
@@ -81,6 +82,8 @@ class RentalReservationTimerTask:
         for e in self.active_rentals:
             if e.ended:
                 self.endRent(e.rent)
+            elif not e.overtime and time.time() - e.rent.rental_start > MAX_RENTAL_TIME:
+                e.overtime = True
 
         for e in self.active_reservations:
             if time.time() - e.reservationStart > MAX_RESERVATION_TIME or e.ended:
@@ -91,7 +94,8 @@ class RentalReservationTimerTask:
                    rental_cost="")
         p = PendingRental(rent=r, kmCost=car.kmCost, timeCost=car.timeCost, activationCost=car.activationCost,
                           startLong=car.currentLocationLong,
-                          startLat=car.currentLocationLat, paymentType=payment_method, cvv=cvv, card=card)
+                          startLat=car.currentLocationLat, paymentType=payment_method, cvv=cvv, card=card,
+                          overtime=False)
         if payment_method == "PP":
             if RENTAL_DB.getBalance(user_id) < MINIMAL_BALANCE:
                 return None
@@ -106,7 +110,7 @@ class RentalReservationTimerTask:
             return False
         cost = r.calculate_current_cost()
         from backend.utils import charge_card, gr_to_pln_gr
-        if not charge_card(cost, r.paymentType == "PP", r.card, r.cvv, r.rent.userId):
+        if not charge_card(cost, r.paymentType == "PP", r.card, r.cvv, r.rent.renter):
             return False
         self.active_rentals.remove(r)
         r.rent.ended = True
@@ -142,6 +146,8 @@ EMPTY_OK: tuple
 rental_timer_task: RentalReservationTimerTask
 MAX_RESERVATION_TIME = 300
 MINIMAL_BALANCE = 10
+TOO_LONG_RENTAL_PUNISHMENT = 200
+MAX_RENTAL_TIME = 3600 * 24
 
 
 def runTests():

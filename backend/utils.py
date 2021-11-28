@@ -81,7 +81,7 @@ def pln_gr_to_gr(pln_gr: str) -> int:
     return int(s[0]) * 100 + int(s[1])
 
 
-def execute_card_charge(cardNumber, cardExpiration, cvv, holder, address) -> bool:
+def execute_card_charge(amount, cardNumber, cardExpiration, cvv, holder, address) -> bool:
     return True
 
 
@@ -101,7 +101,7 @@ def charge_card(rentalCostGr: int, chargeBalance: bool = False, card: CreditCard
     else:
         if cvv == 0 or card is None:
             return False
-        return execute_card_charge(card.cardNumber, card.expirationDate, cvv, card.cardHolderName,
+        return execute_card_charge(rentalCostGr, card.cardNumber, card.expirationDate, cvv, card.cardHolderName,
                                    card.cardHolderAddress)
 
 

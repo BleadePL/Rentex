@@ -41,11 +41,9 @@ def loginToSystem():
     l = parsed["login"]
     pas: str = parsed["password"]
     # TODOREMOVE
-    if l == "test" and pas == "test":
-        user_id = "test123"
-    else:
-        user_id = RENTAL_DB.authUser(l, pas)
-    if user_id is not None:
+    user = RENTAL_DB.authUser(l, pas)
+    if user is not None:
+        user_id = user._id
         u = next((user for user in logged_in_users if user.get_id() == user_id), None)
         if u is not None:
             logged_in_users.remove(u)
@@ -53,7 +51,8 @@ def loginToSystem():
         user = LoggedInUser(user_id, token)
         login_user(user)
         logged_in_users.append(user)
-        return {'token': token}
+        print("E")
+        return {'token': token}, 200
     else:
         return {}, 401
 
@@ -121,18 +120,18 @@ def activate():
     return BAD_REQUEST
 
 
-@app.route("/login/uploadphoto", methods=["POST"])
+@app.route("/login/uploadphotos", methods=["POST"])
 @login_required
 def uploadPhoto():
     if request.files is None:
-        return 400
+        return BAD_REQUEST
     if "front" not in request.files and "back" not in request.files:
-        return 400
+        return BAD_REQUEST
     front = request.files["front"]
     front.save(PHOTOS_TARGET + "/" + current_user.get_id() + "_front_" + front.filename)
     back = request.files["back"]
     back.save(PHOTOS_TARGET + "/" + current_user.get_id() + "_back_" + back.filename)
-    return {}, 200
+    return EMPTY_OK
 
 
 print("Login_controller" + __name__)

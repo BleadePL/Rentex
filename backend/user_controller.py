@@ -6,7 +6,7 @@ from backend.db_interface import DatabaseInterface
 from backend.flask_main import LoggedInUser
 from backend.models import CreditCard
 from backend.utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
-    is_longitude_valid
+    is_longitude_valid, execute_card_charge, gr_to_pln_gr, pln_gr_to_gr
 from database_access import RENTAL_DB
 from flask_main import app, EMPTY_OK, BAD_REQUEST
 
@@ -71,10 +71,17 @@ def getRentalHistory():
     return RENTAL_DB.getUserRentalHistory(current_user.get_id(), pageIndex, pageLength)  # TODO: Suspiciously short
 
 
+@app.route("/user/cards", methods=["GET"])
+@login_required
+def getCards():
+    cards = RENTAL_DB.getCards(current_user.get_id())
+    return {"cards": list(map(lambda card: card._id, cards))}, 200
+
+
 @app.route("/user/cards", methods=["POST"])
 @login_required
 def addCard():
-    if request.json in None:
+    if request.json is None:
         return {"error": "UNKNOWN"}, 400
     parsed = parse_required_fields(request.json, ["cardNumber", "expirationDate", "cardHolder", "cvv", "holderAddress"])
     if parsed is None:
@@ -84,15 +91,18 @@ def addCard():
     card = CreditCard(number=parsed["cardNumber"], expiration=parsed["expirationDate"],
                       holder_name=parsed["cardHolder"], holder_address=parsed["holderAddress"])
     if not execute_card_verification(card, parsed["cvv"]):
-        return {"error": "BLOCK_ERROR"}
+        return {"error": "BLOCK_ERROR"}, 400
 
-    return RENTAL_DB.addCard(current_user.get_id(), card)
+    if RENTAL_DB.addCard(current_user.get_id(), card):
+        return EMPTY_OK
+    return {"error": "UNKNOWN"}, BAD_REQUEST
 
 
 @app.route("/user/card/<card_id>", methods=["GET"])
 @login_required
 def getCard(card_id: str):
     card = RENTAL_DB.getCard(current_user.get_id(), card_id)
+    print(card)
     if card is None:
         return BAD_REQUEST
 
@@ -106,12 +116,20 @@ def getCard(card_id: str):
 @app.route("/user/card/<card_id>/charge", methods=["POST"])
 @login_required
 def charge(card_id: str):
-    if request.json is None or "balance" not in request.json or "cvv" not in request.json:
+    print(request.json)
+    if request.json is None or "amount" not in request.json or "cvv" not in request.json:
         return BAD_REQUEST
     card = RENTAL_DB.getCard(current_user.get_id(), card_id)
-    if card is None:
+    user = RENTAL_DB.getUser(current_user.get_id())
+    if card is None or user is None:
         return BAD_REQUEST
 
+    if execute_card_charge(int(request.json["amount"]) * 100, card.cardNumber, card.expirationDate, request.json["cvv"],
+                           card.cardHolderName, card.cardHolderAddress):
+        RENTAL_DB.setNewBalance(current_user.get_id(),
+                                gr_to_pln_gr(pln_gr_to_gr(user.balance) + int(request.json["amount"]) * 100))
+        return EMPTY_OK
+    return BAD_REQUEST
 
 @app.route("/user/card/<card_id>", methods=["DELETE"])
 @login_required

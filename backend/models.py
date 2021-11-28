@@ -13,7 +13,7 @@ class Reservation:
     Do not edit the class manually.
     """
 
-    def __init__(self, reservation_id: int = None, reservation_start: datetime = None, duration: int = None,
+    def __init__(self, reservation_id: int = None, reservation_start: int = None,
                  car_id: int = None, reservation_end=None, user_id=None):  # noqa: E501
         """Reservation - a model defined in Swagger
 
@@ -150,7 +150,7 @@ class Rental:
     Do not edit the class manually.
     """
 
-    def __init__(self, rental_id: int = None, car_id: int = None, rental_start: datetime = None, rental_end: datetime = None,
+    def __init__(self, rental_id: int = None, car_id: int = None, rental_start: int = None, rental_end: int = None,
                  rental_cost: str = None, mileage: int = None, ended: bool = None, client_id=None):  # noqa: E501
         """Rental - a model defined in Swagger
 
