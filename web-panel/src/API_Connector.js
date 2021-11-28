@@ -272,10 +272,10 @@ class API_Session{
      * @param failed {function(): void}
      * @returns {Promise<*>}
      */
-    async uploadPhoto(front, back, success, failed){
-        failed()
-        return unimplemented
-    }
+    // async uploadPhoto(front, back, success, failed){
+    //     failed()
+    //     return unimplemented
+    // }
 
     /**
      *
