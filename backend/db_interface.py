@@ -62,7 +62,7 @@ class DatabaseInterface:
         """
         pass
 
-    def activateAccount(self, userId: str):
+    def setAccountStatus(self, userId: str, status:str):
         """
 
         :param token:
@@ -199,12 +199,6 @@ class DatabaseInterface:
         :param rent: Already calculated and ready to be archived rental
         :returns True if success, False if not
         """
-        pass
-
-    def adminActive(self, userId):
-        pass
-
-    def acceptDocuments(self, userId):
         pass
 
     def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):

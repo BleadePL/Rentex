@@ -13,7 +13,7 @@ class Reservation:
     Do not edit the class manually.
     """
 
-    def __init__(self, reservation_id: int = None, reservation_start: int = None, duration: int = None,
+    def __init__(self, reservation_id: int = None, reservation_start: datetime = None, duration: int = None,
                  car_id: int = None, reservation_end=None, user_id=None):  # noqa: E501
         """Reservation - a model defined in Swagger
 
@@ -150,7 +150,7 @@ class Rental:
     Do not edit the class manually.
     """
 
-    def __init__(self, rental_id: int = None, car_id: int = None, rental_start: int = None, rental_end: int = None,
+    def __init__(self, rental_id: int = None, car_id: int = None, rental_start: datetime = None, rental_end: datetime = None,
                  rental_cost: str = None, mileage: int = None, ended: bool = None, client_id=None):  # noqa: E501
         """Rental - a model defined in Swagger
 
@@ -170,11 +170,11 @@ class Rental:
         :type ended: bool
         """
         self._id = rental_id
-        self.userId = client_id
+        self.renter = client_id
         self.carId = car_id
         self.rentalStart = rental_start
         self.rentalEnd = rental_end
-        self.rentalCost = rental_cost
+        self.totalCost = rental_cost
         self.mileage = mileage
         self.ended = ended
 
@@ -206,7 +206,7 @@ class User:
                  surname: str = None,
                  account_type: str = None, status: str = None, balance: str = None, pesel: str = None,
                  driver_licence_number: str = None, driver_licence_expiration_date: str = None,
-                 last_rental: int = None, current_reservation: int = None, role: str = None,
+                 last_rental: int = None, reservation: int = None, role: str = None,
                  current_rental: Rental = None, cards: list = None, activationCode=None,
                  rental_history_ids: list[str] = None):  # noqa: E501
         """User - a model defined in Swagger
@@ -253,7 +253,7 @@ class User:
         self.driverLicenceExpirationDate = driver_licence_expiration_date
         self.rentalHistoryIds = rental_history_ids
         self.currentRental = current_rental
-        self.currentReservation = current_reservation
+        self.reservation = reservation
         self.role = role
         self.cards = cards
         self.activationCode = activationCode
@@ -319,8 +319,8 @@ class Location:
 
 
 class Service:
-    def __init__(self, service_id: str = None, car_id: str = None, user_id: str = None, service_start: str = None,
-                 service_end: str = None, description=None):
+    def __init__(self, service_id: str = None, car_id: str = None, user_id: str = None, service_start: datetime = None,
+                 service_end: datetime = None, description=None):
         self._id = service_id
         self.carId = car_id
         self.userId = user_id

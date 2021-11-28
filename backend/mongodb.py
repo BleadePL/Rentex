@@ -1,6 +1,9 @@
+import re
+from typing_extensions import TypeVarTuple
 import bcrypt
 from bson import ObjectId
 from pymongo import MongoClient
+from Rentex.backend.rent_controller import getReservation
 
 from db_interface import DatabaseInterface
 from models import *
@@ -118,13 +121,15 @@ class MongoDBInterface(DatabaseInterface):
             return None
         return activationToken["activationCode"]
 
-    def activateAccount(self, userId: str):
+    def setAccountStatus(self, userId: str, status:str):
         """
 
         :param token:
         :return true if account activated, false if not
         """
-        result = self.rentalDb["User"].update_one({"_id": userId}, {'$set': {"status": "ACTIVE"}})
+        if status not in ["ACTIVE","INACTIVE","DOCUMENTS","PENDING","PAYMENT","LOCKED","DELETED"]:
+            return False
+        result = self.rentalDb["User"].update_one({"_id": userId}, {'$set': {"status": status}})
         if result.modified_count == 0:
             return False
         return result.upserted_id
@@ -188,7 +193,7 @@ class MongoDBInterface(DatabaseInterface):
             "expirationDate": card.expirationDate,
             "cardHolderName": card.cardHolderName,
             "cardHolderAddress": card.cardHolderAddress
-        }}})
+        }}}) # TODO: encrypt CC
         return result.modified_count != 0
 
     def deleteCard(self, userId, cardId):
@@ -209,7 +214,13 @@ class MongoDBInterface(DatabaseInterface):
     def browseNearestLocations(
             self, location: tuple[str, str], distance
     ) -> list["Location"]:
-        pass
+        locations = []
+        for location_ in self.rentalDb["Location"].find():
+            if  calculate_gps_distance((float(location[0]), float(location[1])),
+                                          (float(location_["locationLat"]), 
+                                          float(location_["locationLong"]))) <= distance:
+                locations.append(Location.from_dict(location_))
+        return locations
 
     def getCar(self, carId):
         car = self.rentalDb["Car"].find_one({"_id": carId})
@@ -243,7 +254,7 @@ class MongoDBInterface(DatabaseInterface):
         if self.rentalDb["Car"].find_one({"_id": reservation.carId})["status"] != "ACTIVE": 
             return False
         user = self.rentalDb["User"].find_one({"_id": reservation.userId})
-        if user["currentRental"] != "" or user["reservation"] != "":
+        if user["status"] != "ACTIVE" or user["currentRental"] != "" or user["reservation"] != "":
             return False
         self.rentalDb["User"].find_and_modify({"_id": reservation.userId}, 
                 {"$set": {"reservation": {
@@ -256,22 +267,91 @@ class MongoDBInterface(DatabaseInterface):
         return True
 
     def startRental(self, userId, carId):
-        pass
+        car = self.getCar(carId)
+        user = self.getUser(userId)
+        if car is None:
+            return None
+        if user is None:
+            return None
+        # check if car is available or reserved by the user
+        if car.status != "ACTIVE":
+            if car.status != "RESERVED":
+                return None
+            if self.getReservation(userId, carId) is None:
+                return None
+        # check if user is active and they don't have a currentRental 
+        if user.status != "ACTIVE" or user.currentRental != "":
+            return None
+        # if they have a reservation, end it
+        if user.reservation != "":
+            self.endReservation(user.reservation) # TODO: save reservation in user as object
+        # add the rental
+        if self.patchCar(carId, {'$set': {"status": "INUSE"}}) is None:
+            return None
+        rentalId = ObjectId()
+        if self.patchUser(userId, {'$set': {"currentRental": {
+                '_id': rentalId,
+                'rentalStart': datetime.utcnow(),
+                'mileage': car.mileage,
+                'ended': False,
+                'car': carId}}}) is None:
+            self.patchCar(carId, {'$set': {"status": "ACTIVE"}})
+            return None
+        return rentalId
 
     def getRental(self, userId, rentalId):
-        pass
+        user = self.getUser(userId)
+        if user is None:
+            return None
+        if user.currentRental._id == rentalId:
+            return Rental.from_dict(user.currentRental)
+        rental= self.rentalDb["RentalArchive"].find_one({"$and": [
+                    {"_id": rentalId},
+                    {"renter": user._id}]}) 
+        if rental is None:
+            return None
+        rental = Rental.from_dict(rental)
+        rental.renter = userId
+        return rental
 
     def endRental(self, rent: Rental):
-        pass
-
-    def adminActive(self, userId):
-        pass
-
-    def acceptDocuments(self):
-        pass
+        user = self.getUser(rent.renter)
+        car = self.getCar(rent.carId)
+        rental = self.getRental(rent.renter, rent._id)
+        if user is None or car is None or rental is None:
+            return False
+        if rent.ended == True:
+            return False
+        if user.currentRental == "" or user.currentRental["car"] != rental.carId:
+            return False
+        # update everything in the rental
+        rental.rentalEnd = datetime.utcnow()
+        rental.mileage = car.mileage - rental.mileage
+        rental.totalCost = (rental.mileage * car.kmCost + 
+                (rental.rentalEnd - rental.rentalStart).total_seconds() / 60.0)
+        rental.ended = True
+        # update car
+        self.patchCar(car._id, {"$set" : {"lastUsed": rental.rentalEnd, "status": "ACTIVE"}})
+        # update user
+        self.patchUser(user._id, {"$set": {"currentRental": ""}})
+        # move rental to RentalArchive
+        self.rentalDb["RentalArchive"].insert_one({
+            "_id": rental._id,
+            "rentalStart": rental.rentalStart,
+            "rentalEnd": rental.rentalEnd,
+            "mileage": rental.mileage,
+            "roralCost": rental.totalCost,
+            "ended": rental.ended,
+            "car": rental.carId,
+            "renter": rental.renter
+        })
+        return True
 
     def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):
-        pass
+        cars = self.browseNearestCars(location, distance)
+        if cars is None:
+            return None
+        return cars[pageIndex: pageIndex+pageCount]
 
     def addCar(self, car: 'Car'):
         pass
