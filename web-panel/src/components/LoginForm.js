@@ -1,4 +1,5 @@
 import React, {useState} from "react";
+import '../App.css'
 
 function LoginForm({Login, error}){
     const [details, setDetails] = useState({login: "", password: ""});
@@ -22,7 +23,7 @@ function LoginForm({Login, error}){
                     <label htmlFor="password">Password: </label>
                     <input type="password" name="password" id="password" onChange={e => setDetails({...details, password: e.target.value})} value={details.password}/>
                 </div>
-                <input type="submit" value="Sign UP" />
+                <input class="submitButton" type="submit" value="Sign UP" />
             </div>
         </form>
     )

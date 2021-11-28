@@ -3,6 +3,7 @@ import {BrowserRouter as Router, useNavigate, Route, Routes} from "react-router-
 import API_Session from "./API_Connector";
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import './App.css'
 
 const api = new API_Session();
 
@@ -80,7 +81,7 @@ function App() {
   }
 
   const Register = details => {
-    //api.register(details.name, details.surname, details.gender, details.login, details.password, details.address, details.email, details.pesel, setError("success"), setError("Failure"));
+    api.register(details.name, details.surname, details.gender, details.login, details.password, details.address, details.email, details.pesel, setError("success"), setError("Failure"));
 
     if(error == "success" || 1 == 1){
       setUser({
@@ -100,13 +101,19 @@ function App() {
       navigate("/loggedIn");
       console.log(details);
     }
+  }
 
-    
+  const RentCar = () => {
+
+  }
+
+  const BrowseCars = () => {
 
   }
 
   const navigate = useNavigate();
   useEffect(() => {
+    if(user.name == "") navigate("/")
   },[])
 
   return (
@@ -138,13 +145,20 @@ function App() {
           <Route path="/loggedIn" element = {
               <div>
                 <h2>Welcome, <span>{user.name}</span></h2>
-                <button button onClick={Logout}>Logout</button>
+
+                <ul>
+                  <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li>
+                  <li><button name="browse-cars" onClick={BrowseCars}>Browse available cars</button></li>
+                  <li><button name="reserved-car">Reserved car</button></li>
+                  <li><button name="logout" onClick={Logout}>Logout</button></li>
+                </ul>
               </div>
           }/>
+
+
       
     </Routes>
       
-
   );
 }
 

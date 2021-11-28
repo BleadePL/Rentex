@@ -1,4 +1,5 @@
 import React, {useState} from "react";
+import '../App.css'
 
 function RegisterForm({Register, error}){
     const [details, setDetails] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
@@ -49,7 +50,7 @@ function RegisterForm({Register, error}){
                         <input type="text" name="pesel" id="pesel" onChange={e => setDetails({...details, pesel: e.target.value})} value={details.pesel}/>
                 </div>
 
-                <input type="submit" value="Sign IN" />
+                <input className="submitButton" type="submit" value="Sign IN" />
             </div>
         </form>
     )
