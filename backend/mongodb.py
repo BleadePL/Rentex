@@ -1,6 +1,7 @@
 import bcrypt
 from bson import ObjectId
 from pymongo import MongoClient
+from utils import convertObjectIdsToStr
 
 from db_interface import DatabaseInterface
 from models import *
@@ -41,7 +42,7 @@ class MongoDBInterface(DatabaseInterface):
             {"login": login, "password": bcrypt.hashpw(password.encode('utf8'), salt)})
         if user is None:
             return None
-        return User.from_dict(user)
+        return User.from_dict(convertObjectIdsToStr(user))
 
     def registerUser(
             self,
@@ -87,7 +88,7 @@ class MongoDBInterface(DatabaseInterface):
                 "rentalArchive": []
             }
         )
-        return added.inserted_id
+        return convertObjectIdsToStr(added.inserted_id)
 
     def getUserToken(self, userId: str):
         pass
@@ -99,7 +100,7 @@ class MongoDBInterface(DatabaseInterface):
         :return Current status of the account as a str, or None if any error
         """
         userStatus = self.rentalDb["User"].find_one(
-            {"_id": userId},
+            {"_id": ObjectId(userId)},
             {"status": 1}
         )
         if userStatus is None:
@@ -113,7 +114,7 @@ class MongoDBInterface(DatabaseInterface):
         :return None if there is no token, or token of activation
         """
         activationToken = self.rentalDb["User"].find_one(
-            {"_id": userId},
+            {"_id": ObjectId(userId)},
             {"activationCode": 1}
         )
         if activationToken is None:
@@ -128,21 +129,20 @@ class MongoDBInterface(DatabaseInterface):
         """
         if status not in ["ACTIVE","INACTIVE","DOCUMENTS","PENDING","PAYMENT","LOCKED","DELETED"]:
             return False
-        result = self.rentalDb["User"].update_one({"_id": userId}, {'$set': {"status": status}})
+        result = self.rentalDb["User"].update_one({"_id": ObjectId(userId)}, {'$set': {"status": status}})
         if result.modified_count == 0:
             return False
-        return result.upserted_id
+        return convertObjectIdsToStr(result.upserted_id)
 
     def getUser(self, userId):
         """
-
         :param userId:
         :return User, or None if any error
         """
-        user = self.rentalDb["User"].find_one({"_id": userId})
+        user = self.rentalDb["User"].find_one({"_id": ObjectId(userId)})
         if user is None:
             return None
-        return User.from_dict(user)
+        return User.from_dict(convertObjectIdsToStr(user))
 
     def setActivationToken(self, userId: int, token: str) -> bool:
         """
@@ -152,14 +152,14 @@ class MongoDBInterface(DatabaseInterface):
         :return true if successful, false if not
 
         """
-        result = self.rentalDb["User"].update_one({"_id": userId}, {'$set': {"activationCode": token}})
+        result = self.rentalDb["User"].update_one({"_id": ObjectId(userId)}, {'$set': {"activationCode": token}})
         if result.modified_count == 0:
             return False
         return True
 
     def changePassword(self, userId, newPwd):
         result = self.rentalDb["User"].update_one(
-            {"_id": userId},
+            {"_id": ObjectId(userId)},
             {'$set': {"password": bcrypt.hashpw(newPwd.encode('utf8'), salt)}})
         if result.modified_count == 0:
             return False
@@ -167,26 +167,26 @@ class MongoDBInterface(DatabaseInterface):
 
     def updateLocation(self, carId, location: tuple[str, str]):  # TODO: check coords?
         result = self.rentalDb["Car"].update_one(
-            {"_id": carId},
+            {"_id": ObjectId(carId)},
             {'$set': {"currentLocationLat": location[0], "currentLocationLong": location[1]}})
         return result.modified_count != 0
 
     def rentalHistory(self, userId, pageIndex, pageLength):
         rentals = []
-        for rentalId in self.rentalDb["User"].find_one({"_id": userId})["rentalArchive"]:
+        for rentalId in self.rentalDb["User"].find_one({"_id": ObjectId(userId)})["rentalArchive"]:
             rental = self.rentalDb["RentalArchive"].find_one({"_id": ObjectId(rentalId)})
             if rental is not None:
-                rentals.append(Rental.from_dict(rental))
+                rentals.append(Rental.from_dict(convertObjectIdsToStr(rental)))
         return rentals[pageIndex:pageIndex + pageLength]
 
     def getCards(self, userId):
         cards = []
-        for card in self.rentalDb["User"].find_one({"_id": userId}, {"CreditCards": 1})["CreditCards"]:
-            cards.append(CreditCard.from_dict(card))
+        for card in self.rentalDb["User"].find_one({"_id": ObjectId(userId)}, {"CreditCards": 1})["CreditCards"]:
+            cards.append(CreditCard.from_dict(convertObjectIdsToStr(card)))
         return cards
 
     def addCard(self, userId, card: CreditCard):
-        result = self.rentalDb["User"].update_one({"_id": userId}, {'$push': {"CreditCards": {
+        result = self.rentalDb["User"].update_one({"_id": ObjectId(userId)}, {'$push': {"CreditCards": {
             "_id": ObjectId(),
             "cardNumber": card.cardNumber,
             "expirationDate": card.expirationDate,
@@ -196,8 +196,8 @@ class MongoDBInterface(DatabaseInterface):
         return result.modified_count != 0
 
     def deleteCard(self, userId, cardId):
-        result = self.rentalDb["User"].update_one({"_id": userId}, {'$pull': {"CreditCards": {
-            "_id": cardId
+        result = self.rentalDb["User"].update_one({"_id": ObjectId(userId)}, {'$pull': {"CreditCards": {
+            "_id": ObjectId(cardId)
         }}})
         return result.modified_count != 0
 
@@ -207,7 +207,7 @@ class MongoDBInterface(DatabaseInterface):
             if calculate_gps_distance((float(location[0]), float(location[1])),
                                       (float(car["currentLocationLat"]),
                                        float(car["currentLocationLong"]))) <= distance:
-                cars.append(Car.from_dict(car))
+                cars.append(Car.from_dict(convertObjectIdsToStr(car)))
         return cars
 
     def browseNearestLocations(
@@ -218,51 +218,51 @@ class MongoDBInterface(DatabaseInterface):
             if  calculate_gps_distance((float(location[0]), float(location[1])),
                                           (float(location_["locationLat"]),
                                           float(location_["locationLong"]))) <= distance:
-                locations.append(Location.from_dict(location_))
+                locations.append(Location.from_dict(convertObjectIdsToStr(location_)))
         return locations
 
     def getCar(self, carId):
-        car = self.rentalDb["Car"].find_one({"_id": carId})
+        car = self.rentalDb["Car"].find_one({"_id": ObjectId(carId)})
         if car is None:
             return None
-        return Car.from_dict(car)
+        return Car.from_dict(convertObjectIdsToStr(car))
 
     def getLocation(self, locationId):
-        location = self.rentalDb["Location"].find_one({"_id": locationId})
+        location = self.rentalDb["Location"].find_one({"_id": ObjectId(locationId)})
         if location is None:
             return None
-        return Car.from_dict(location)
+        return Car.from_dict(convertObjectIdsToStr(location))
 
     def getReservation(self, userId, reservationId):
-        reservation = self.rentalDb["User"].find_one({"_id": userId}, {"reservation": 1})
+        reservation = self.rentalDb["User"].find_one({"_id": ObjectId(userId)}, {"reservation": 1})
         if reservation is None or reservation["_id"] != ObjectId(reservationId):
             return None
-        result = Reservation.from_dict(reservation)
+        result = Reservation.from_dict(convertObjectIdsToStr(reservation))
         result.userId = userId
         return result
 
     def endReservation(self, reservation: Reservation):
-        reservation_ = self.rentalDb["User"].find_one({"_id": reservation.userId}, {"reservation": 1})
-        if reservation_ is None or reservation_["_id"] != reservation.carId:
+        reservation_ = self.rentalDb["User"].find_one({"_id": ObjectId(reservation.userId)}, {"reservation": 1})
+        if reservation_ is None or reservation_["_id"] != ObjectId(reservation.carId):
             return False
-        self.rentalDb["User"].find_and_modify({"_id": reservation.userId}, {'$unset': {"reservation": ""}})
-        self.rentalDb["Car"].find_and_modify({"_id": reservation_["car"]}, {'$set': {"status": "ACTIVE"}})
+        self.rentalDb["User"].find_and_modify({"_id": ObjectId(reservation.userId)}, {'$unset': {"reservation": ""}})
+        self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)}, {'$set': {"status": "ACTIVE"}})
         return True
 
     def startReservation(self, reservation: Reservation):
-        if self.rentalDb["Car"].find_one({"_id": reservation.carId})["status"] != "ACTIVE":
+        if self.rentalDb["Car"].find_one({"_id": ObjectId(reservation.carId)})["status"] != "ACTIVE":
             return False
-        user = self.rentalDb["User"].find_one({"_id": reservation.userId})
+        user = self.rentalDb["User"].find_one({"_id": ObjectId(reservation.userId)})
         if user["status"] != "ACTIVE" or user["currentRental"] != "" or user["reservation"] != "":
             return False
-        self.rentalDb["User"].find_and_modify({"_id": reservation.userId},
+        self.rentalDb["User"].find_and_modify({"_id": ObjectId(reservation.userId)},
                                               {"$set": {"reservation": {
                                                   "_id": ObjectId(),
                                                   "reservationStart": reservation.reservationStart,
                                                   "reservationsEnd": reservation.reservationEnd,
-                                                  "car": reservation.carId
+                                                  "car": ObjectId(reservation.carId)
                                               }}})
-        self.rentalDb["Car"].find_and_modify({"_id": reservation.carId}, {"$set": {"status": "RESRVED"}})
+        self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)}, {"$set": {"status": "RESRVED"}})
         return True
 
     def startRental(self, userId, carId):
@@ -293,23 +293,23 @@ class MongoDBInterface(DatabaseInterface):
                 'rentalStart': datetime.utcnow(),
                 'mileage': car.mileage,
                 'ended': False,
-                'car': carId}}}) is None:
+                'car': ObjectId(carId)}}}) is None:
             self.patchCar(carId, {'$set': {"status": "ACTIVE"}})
             return None
-        return rentalId
+        return convertObjectIdsToStr(rentalId)
 
     def getRental(self, userId, rentalId):
         user = self.getUser(userId)
         if user is None:
             return None
-        if user.currentRental._id == rentalId:
-            return Rental.from_dict(user.currentRental)
+        if user.currentRental._id == ObjectId(rentalId):
+            return Rental.from_dict(convertObjectIdsToStr(user.currentRental))
         rental= self.rentalDb["RentalArchive"].find_one({"$and": [
-                    {"_id": rentalId},
-                    {"renter": user._id}]})
+                    {"_id": ObjectId(rentalId)},
+                    {"renter": ObjectId(user._id)}]})
         if rental is None:
             return None
-        rental = Rental.from_dict(rental)
+        rental = Rental.from_dict(convertObjectIdsToStr(rental))
         rental.renter = userId
         return rental
 
@@ -335,14 +335,14 @@ class MongoDBInterface(DatabaseInterface):
         self.patchUser(user._id, {"$set": {"currentRental": ""}})
         # move rental to RentalArchive
         self.rentalDb["RentalArchive"].insert_one({
-            "_id": rental._id,
+            "_id": ObjectId(rental._id),
             "rentalStart": rental.rentalStart,
             "rentalEnd": rental.rentalEnd,
             "mileage": rental.mileage,
             "roralCost": rental.totalCost,
             "ended": rental.ended,
-            "car": rental.carId,
-            "renter": rental.renter
+            "car": ObjectId(rental.carId),
+            "renter": ObjectId(rental.renter)
         })
         return True
 
@@ -400,10 +400,11 @@ class MongoDBInterface(DatabaseInterface):
 
 RENTAL_DB = MongoDBInterface()
 if DB_TESTS:
-    print(RENTAL_DB.registerUser("asd", "asd", "asdddd", "asd", "asd", "asd", "asd"))
-    print(RENTAL_DB.getUser(ObjectId("61a27e387ba5e03ad3acca39"))._id)
-    print(RENTAL_DB.getAccountStatus(ObjectId("61a27e387ba5e03ad3acca39")))
-    print(RENTAL_DB.activateAccount(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(type(RENTAL_DB.registerUser("asd", "asd", "asddddd", "asd", "asd", "asd", "asd")))
+    print(type(RENTAL_DB.getUser(ObjectId("61a27e387ba5e03ad3acca39"))._id))
+    print("aaa")
+    print(RENTAL_DB.getAccountStatus("61a27e387ba5e03ad3acca39"))
+    print(RENTAL_DB.setAccountStatus(ObjectId("61a27e387ba5e03ad3acca39"), "ACTIVE"))
     print(RENTAL_DB.getAccountStatus(ObjectId("61a27e387ba5e03ad3acca39")))
     print(RENTAL_DB.getActivationToken(ObjectId("61a27e387ba5e03ad3acca39")))
     print(RENTAL_DB.setActivationToken(ObjectId("61a27e387ba5e03ad3acca39"), "aasdasd"))
