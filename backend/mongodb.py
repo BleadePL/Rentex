@@ -90,9 +90,6 @@ class MongoDBInterface(DatabaseInterface):
         )
         return convertObjectIdsToStr(added.inserted_id)
 
-    def getUserToken(self, userId: str):
-        pass
-
     def getAccountStatus(self, userId: str):
         """
 
@@ -352,9 +349,6 @@ class MongoDBInterface(DatabaseInterface):
             return None
         return cars[pageIndex: pageIndex+pageCount]
 
-    def addCar(self, carDict: 'dict'):
-        pass
-
     def deleteCar(self, carId):
         result = self.rentalDb["Car"].delete_one({ObjectId(carId)})
         return result.deleted_count != 0
@@ -377,9 +371,6 @@ class MongoDBInterface(DatabaseInterface):
                             {"driverLicenceNumber": {"$regex": filter}},
                             {"login": {"$regex": filter}},
                             {"email": {"$regex": filter}},
-                            {"accountType": {"$regex": filter}},
-                            {"status": {"$regex": filter}},
-                            {"role": {"$regex": filter}},
                             ]}).skip(pageIndex).limit(pageCount):
             users.append(User.from_dict(convertObjectIdsToStr(user)))
         return users
@@ -392,33 +383,141 @@ class MongoDBInterface(DatabaseInterface):
         return result is not None
 
     def getUserRentalHistory(self, userId, pageIndex, pageLength):
-        pass
+        rentals = []
+        for rental in self.rentalDb["RentalArchive"].find({"renter": ObjectId(userId)}
+                ).skip(pageIndex).limit(pageLength):
+            rentals.append(Rental.from_dict(convertObjectIdsToStr(rental)))
+        return rentals
 
-    def addLocation(self, location: dict) -> bool:
-        pass
+    def getCard(self, userId, cardId):
+        for card in self.getCards(userId):
+            if card._id == cardId:
+                return card
+        return None
+
+    def addLocation(self, location: Location):
+        result = self.rentalDb["Location"].insert_one({
+            "locationType": location.locationType,
+            "locationName": location.locationName,
+            "locationAddress": location.locationAddress,
+            "leaveReward": location.leaveReward,
+            "locationLat": location.locationLat,
+            "locationLong": location.locationLong,
+            "status": location.status,
+        })
+        return convertObjectIdsToStr(result.inserted_id)
+        
 
     def getLocations(self, pageIndex, pageCount, location: tuple[str, str], distance):
-        pass
+        locations = self.browseNearestLocations(location, distance)
+        if locations is None:
+            return None
+        return locations[pageIndex: pageIndex+pageCount]
 
     def deleteLocation(self, locationId):
-        pass
+        if len(self.getServicesForLocation(locationId)) != 0:
+            return False
+        return self.patchLocation(locationId, {"$set": {"status": "DELETED"}})
 
     def patchLocation(self, locationId, changes: dict):
-        pass
+        result = self.rentalDb["User"].find_one_and_update({"_id": ObjectId(locationId)}, changes)
+        return result is not None
 
-    def serviceCar(self, carId):
-        pass
+    def serviceCar(self, carId, userId, locationId, description=""):# TODO: remove $set from patch car
+        service = {"dateStart": datetime.utcnow(),
+                    "leftBy": ObjectId(userId),
+                    "location": ObjectId(locationId),
+                    "description": description}
+        if self.patchCar(ObjectId(carId), {{"$push": {"services": service}},
+                    {"$set": {"status": "SERVICE"}}}):
+            service["carId"] = carId
+            return Service.from_dict(convertObjectIdsToStr(service))
+        return None # TODO: set client balance
 
-    def endService(self, serviceId):
-        pass
+    def endService(self, service:Service):
+        service =self.rentalDb["Car"].find_one_and_update(
+            {"_id": ObjectId(service.carId), "services._id": ObjectId(service._id)},
+            {"$set": {"services.$.dateEnd": datetime.utcnow(), "status": "ACTIVE"}})
+        return service is not None
 
     def getService(self, serviceId):
-        pass
+        car = self.rentalDb["Car"].find_one({"services": {"$elemMatch": {"services._id": ObjectId(serviceId)}}})
+        if car is None:
+            return None
+        for service in car["services"]:
+            if service["_id"] == ObjectId(serviceId):
+                service= Service.from_dict(convertObjectIdsToStr(service))
+                service.carId = car["_id"]
+                return service
+        return None
 
     def getServicesHistory(self, carId):
+        services = []
+        car = self.rentalDb["Car"].find_one({"_id": ObjectId(carId)})
+        if car is None:
+            return services
+        for service in car["services"]:
+            service= Service.from_dict(convertObjectIdsToStr(service))
+            service.carId = car["_id"]
+            services.append(service)
+        return services
+
+    def setNewBalance(self, user_id, new_balance) -> bool:
+        """
+        :param user_id:
+        :param new_balance:
+        :returns True if success, false if not
+        """
+        return self.patchUser(user_id, {"$set": {"balance": "new_balance"}})
+
+    def getBalance(self, user_id) -> int:
+        """
+
+        :rtype: int
+        :returns positive balance if success, -1 if not success
+        """
+        try:
+            balance = self.rentalDb["User"].find_one({"_id": ObjectId(user_id)})["balance"]
+        except Exception as _:
+            balance = -1
+        return balance
+
+    def isUserWithEmailInDB(self, email) -> bool:
+        user = self.rentalDb["User"].find_one({"email": email})
+        return user is not None
+
+    def isUserWithLoginInDB(self, login) -> bool:
+        user = self.rentalDb["User"].find_one({"login": login})
+        return user is not None
+
+    def addCar(self, car: 'Car'):
+        result = self.rentalDb["Car"].insert_one({
+            "brand":car.brand,
+            "vin":car.vin,
+            "regCountryCode":car.regCountryCode,
+            "regNumber":car.regNumber,
+            "modelName":car.modelName,
+            "seats":car.seats,
+            "lastUsed": car.lastUsed,
+            "chargeLevel":car.chargeLevel,
+            "mileage":car.mileage,
+            "currentLocationLat":car.currentLocationLat,
+            "currentLocationLong":car.currentLocationLong,
+            "lastUpdateTime": car.lastUpdateTime,
+            "status":car.status,
+            "activationCost":car.activationCost,
+            "kmCost":car.kmCost,
+            "timeCost":car.timeCost,
+            "esimNumber":car.esimNumber,
+            "esimImei":car.esimImei,
+        })
+        return convertObjectIdsToStr(result.inserted_id)
+
+    def getServicesForLocation(self, locationId):
         pass
 
-
+    def getUserToken(self, userId: str):
+        pass
 
 
 RENTAL_DB = MongoDBInterface()
@@ -435,6 +534,8 @@ if DB_TESTS:
     print(RENTAL_DB.changePassword(ObjectId("61a27e387ba5e03ad3acca39"), "dsad"))
     print(RENTAL_DB.rentalHistory(ObjectId("61a27e387ba5e03ad3acca39"), 0, 1))
     # print(RENTAL_DB.addCard(ObjectId("61a27e387ba5e03ad3acca39"), CreditCard("123123123", "123123", "2022-11-02","asdasd", "asdasd")))
-    print(RENTAL_DB.getCards(ObjectId("61a27e387ba5e03ad3acca39")))
+    for card in RENTAL_DB.getCards(ObjectId("61a27e387ba5e03ad3acca39")):
+        print(card._id)
+    print(RENTAL_DB.getCard("61a27e387ba5e03ad3acca39", "61a2834a7ba5e03ad3acca43"))
     # print(RENTAL_DB.deleteCard(ObjectId("61a27e387ba5e03ad3acca39")))
     print(RENTAL_DB.browseNearestCars(("51.067883", "16.973298"), 2000))

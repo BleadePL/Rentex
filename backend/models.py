@@ -62,7 +62,7 @@ class Car:
                  km_cost: str = None, time_cost: str = None, location_lat: str = None, location_long: str = None,
                  status: str = None, esimImei: str = None, esimNumber: str = None, mileage: int = 0,
                  vin: str = None, currentReservation: Reservation = None, reg_country_code=None,
-                 last_used=None, services_ids: list[str] = None):  # noqa: E501
+                 last_used=None,last_updateTime=None, services_ids: list[str] = None):  # noqa: E501
         """Car - a model defined in Swagger
 
         :param car_id: The car_id of this Car.  # noqa: E501
@@ -98,7 +98,7 @@ class Car:
         self.regCountryCode = reg_country_code
         self.regNumber = reg_number
         self.modelName = model
-        self.passengerNumber = seats
+        self.seats = seats
         self.chargeLevel = charge
         self.activationCost = activation_cost
         self.kmCost = km_cost
@@ -111,6 +111,7 @@ class Car:
         self.mileage = mileage
         self.currentReservation = currentReservation
         self.lastUsed = last_used
+        self.lastUpdateTime = last_updateTime
         self.servicesIds = services_ids
 
     @classmethod
@@ -279,7 +280,7 @@ class Location:
     """
 
     def __init__(self, location_id: str = None, name: str = None, location_lat: str = None, location_long: str = None,
-                 location_type: str = None, location_reward: str = None, location_address=None):  # noqa: E501
+                 location_type: str = None, location_reward: str = None, location_address=None, status: str = None):  # noqa: E501
         """Location - a model defined in Swagger
 
         :param location_id: The location_id of this Location.  # noqa: E501
@@ -303,6 +304,7 @@ class Location:
         self.locationType = location_type
         self.leaveReward = location_reward
         self.locationAddress = location_address
+        self.status = status
 
     @classmethod
     def from_dict(cls, dikt) -> 'Location':

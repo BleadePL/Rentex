@@ -238,14 +238,16 @@ class DatabaseInterface:
     def patchLocation(self, locationId, changes: dict):
         pass
 
-    def serviceCar(self, carId) -> str:
+    def serviceCar(self, carId, userId, locationId, description="") -> str:
         """
-
+        :param carId:
+        :param userId:
+        :param serviceId:
         :returns ID of the created service, None if any error
         """
         pass
 
-    def endService(self, serviceId) -> bool:
+    def endService(self, service:Service) -> bool:
         """
 
         :param serviceId:
@@ -299,3 +301,7 @@ class DatabaseInterface:
 
     def isUserWithLoginInDB(self, login) -> bool:
         pass
+    
+    def getServicesForLocation(self, locationId):
+        pass
+    
