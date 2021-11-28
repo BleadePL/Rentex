@@ -1,4 +1,5 @@
 # coding: utf-8
+import json
 
 CHARGE_LEVEL_DISTANCE = 5  # TODO: Circa 5Km on 1% charge
 

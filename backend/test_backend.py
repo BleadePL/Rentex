@@ -1,4 +1,5 @@
 import io
+from time import sleep
 
 from flask.testing import FlaskClient
 
@@ -95,9 +96,8 @@ class Tests:
         # NAH
         pass
 
-    @test
+    # @test
     def runCardTest(self):
-
         rv = self.client.get("/user/cards", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))
@@ -134,6 +134,163 @@ class Tests:
         # assert rv.status == "200 OK"
         print(rv)
 
+    # @test
+    def testRentalAndSearch(self):
+
+        # Add car
+        rv = self.client.post("/admin/car", data=json.dumps({
+            "brand": "Toyota",
+            "regNumber": "DW112233",
+            "regCountryCode": "PL",
+            "model": "Yaris 1.0",
+            "seats": 5,
+            "charge": 100,
+            "activationCost": "10.30",
+            "kmCost": "1.30",
+            "timeCost": "0.30",
+            "locationLat": "51.111493",
+            "locationLong": "17.027187",
+            "status": "ACTIVE",
+            "vin": "ASDSGFA123123123",
+            "mileage": 125123123,
+            "esimPhoneNumber": 125123123,
+            "eSimImei": "125123123"
+        }), content_type='application/json')
+        assert rv.status == "200 OK"
+
+        # Search for this car
+        rv = self.client.get("/browse/nearestcars?locationLat=51.111593&locationLong=17.027287",
+                             headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+        j = json.loads(rv.data.decode("utf-8"))
+        assert len(j["cars"]) > 0
+        car = j["cars"][0]
+        print(car["_id"])
+
+        # Reservate car
+        rv = self.client.post("/rent/reservate", data=json.dumps({"carId": car["_id"]}),
+                              headers={"Session-Token": self.session_token}, content_type='application/json')
+        assert rv.status == "200 OK"
+        j = json.loads(rv.data)
+        assert "resId" in j
+        resId = j["resId"]
+        print(resId)
+
+        # Wait a moment
+        print("Let the reservation pass a little bit")
+        sleep(5)
+
+        # Get it again
+        rv = self.client.get("/rent/reservation/" + resId, headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+
+        # Cancel reservation
+        rv = self.client.delete("/rent/reservation/" + resId, headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+
+        # Get cards
+        rv = self.client.get("/user/cards", headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+        j = json.loads(rv.data.decode("utf-8"))
+        assert len(j["cards"]) != 0
+        carId = j["cards"][0]
+
+        # Rent the car
+        rv = self.client.post("/rent/rent", data=json.dumps({"carId": car, "cvv": 123, "paymentType": carId}),
+                              headers={"Session-Token": self.session_token}, content_type='application/json')
+        assert rv.status == "200 OK"
+        j = json.loads(rv.data.decode("utf-8"))
+        assert "rentId" in j
+        rental = j["rentId"]
+        print(rental)
+
+        # Get Rental
+        rv = self.client.get("/rent/rent", headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+
+        # Move car a little bit
+        rv = self.client.post("/admin/carpos", data=json.dumps({
+            "carid": carId,
+            "long": '51.135123',
+            "lat": '16.51312'
+        }), content_type='application/json')
+        assert rv.status == "200 OK"
+
+        # Get Cost
+        rv = self.client.get("/rent/rent", headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+        print(rv.data)
+
+        # Gimmie some time!
+        sleep(10)
+
+        # Move car some more
+        rv = self.client.post("/admin/carpos", data=json.dumps({
+            "carid": carId,
+            "long": '51.235123',
+            "lat": '16.50312'
+        }), content_type='application/json')
+        assert rv.status == "200 OK"
+
+        # Gimmie some time!
+        sleep(10)
+
+        # Get Cost
+        rv = self.client.get("/rent/rent", headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+        print(rv.data)
+
+        # Finish rental
+        rv = self.client.delete("/rent/rent/" + rental, headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+
+        # FINISH
+
     @test
-    def testBrowseNearestCar(self):
-        rv = self.client.get("/user/")
+    def serviceCar(self):
+        from flask_main import MIDDLE_LAT, MIDDLE_LONG
+        rv = self.client.get(
+            "/admin/car?locationLat=" + MIDDLE_LAT + "&locationLong=" + MIDDLE_LONG + "&pagelength=100&startindex=0&distance=20000")
+        assert rv.status == "200 OK"
+        j = json.loads(rv.data.decode("utf-8"))
+
+        if len(j["cars"]) == 0:
+            # Add car
+            rv = self.client.post("/admin/car", data=json.dumps({
+                "brand": "Toyota",
+                "regNumber": "DW112233",
+                "regCountryCode": "PL",
+                "model": "Yaris 1.0",
+                "seats": 5,
+                "charge": 100,
+                "activationCost": "10.30",
+                "kmCost": "1.30",
+                "timeCost": "0.30",
+                "locationLat": "51.111493",
+                "locationLong": "17.027187",
+                "status": "ACTIVE",
+                "vin": "ASDSGFA123123123",
+                "mileage": 125123123,
+                "esimPhoneNumber": 125123123,
+                "eSimImei": "125123123"
+            }), content_type='application/json')
+            assert rv.status == "200 OK"
+            rv = self.client.get(
+                "/admin/car?locationLat=" + MIDDLE_LAT + "&locationLong=" + MIDDLE_LONG + "&pagelength=100&startindex=0&distance=20000")
+            assert rv.status == "200 OK"
+            j = json.loads(rv.data.decode("utf-8"))
+            assert len(j["cars"]) > 0
+        car = json.loads(j["cars"][0])
+        print(car)
+
+        rv = self.client.get("/service/car/" + car["_id"], headers={"Session-Token": self.session_token},
+                             content_type='application/json')
+        print(rv.status)
+        assert rv.status == "201 EMPTY"
+
+        # service car
+        rv = self.client.post("/service", data=json.dumps({"carId": car["_id"]}),
+                              headers={"Session-Token": self.session_token}, content_type='application/json')
+        assert rv.status == "200 OK"
+        j = json.loads(rv.data.decode("utf-8"))
+        service = j["serviceId"]

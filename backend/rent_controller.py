@@ -35,6 +35,18 @@ def reservate():
     return {"resId": resId}, 200
 
 
+@app.route("/rent/rent", methods=["GET"])
+@login_required
+def getRentOfUser():
+    user = RENTAL_DB.getUser(current_user.get_id())
+    if user is None:
+        return BAD_REQUEST
+    print(user.currentRental)
+    if user.currentRental is None:
+        return BAD_REQUEST
+    return {"rental": user.currentRental}, 200
+
+
 @app.route("/rent/rent", methods=["POST"])
 @login_required
 def rent():

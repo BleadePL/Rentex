@@ -10,7 +10,8 @@ from backend.models import Rental, Car, Reservation, CreditCard
 from flask_cors import CORS
 import schedule
 
-TESTS = False
+TESTS = True
+
 
 class LoggedInUser:
     def __init__(self, user_id, session_token):
@@ -69,7 +70,7 @@ class PendingRental:
     def calculate_current_cost(self) -> int:
         timeCost = (int(time.time()) - self.rent.rentalStart) * self.timeCost
         return int(int(self.activationCost + timeCost + (
-                    self.distance / 1000) * self.kmCost)) + TOO_LONG_RENTAL_PUNISHMENT if self.overtime else 0
+                self.distance / 1000) * self.kmCost)) + TOO_LONG_RENTAL_PUNISHMENT if self.overtime else 0
 
 
 class RentalReservationTimerTask:
@@ -105,7 +106,7 @@ class RentalReservationTimerTask:
         return None
 
     def endRent(self, r_id) -> bool:
-        r: PendingRental = next(x for x in self.active_rentals if x.rent._id == r_id)
+        r: PendingRental = next((x for x in self.active_rentals if x.rent._id == r_id), None)
         if r is None:
             return False
         cost = r.calculate_current_cost()
@@ -117,7 +118,21 @@ class RentalReservationTimerTask:
         r.rent.rentalEnd = int(time.time())
         r.rent.mileage = r.distance
         r.rent.rentalCost = gr_to_pln_gr(cost)
-        return RENTAL_DB.endRental(r.rent)
+        if RENTAL_DB.endRental(r.rent):
+            l = RENTAL_DB.browseNearestLocations((r.lastLat, r.lastLong), 200)
+            if len(l) > 0:
+                l.sort(key=lambda d: calculate_gps_distance((r.lastLat, r.lastLong), (d.locationLat, d.locationLong)))
+                loc: Location = l[0]
+                user = RENTAL_DB.getUser(userId=r.rent.renter)
+                if user is None:
+                    return False
+                if RENTAL_DB.setNewBalance(user._id, user.balance + loc.leaveReward):
+                    return True
+                return False
+
+            # self.locationLat = location_lat
+            # self.locationLong
+            from utils import calculate_gps_distance
 
     def startReservation(self, car_id, user_id) -> str:
         r = Reservation(car_id=car_id, user_id=user_id, reservation_start=int(time.time()))
@@ -128,7 +143,7 @@ class RentalReservationTimerTask:
         return res_id
 
     def endReservation(self, res_id: str):
-        res = next(x for x in self.active_rentals if x._id == res_id)
+        res = next((x for x in self.active_rentals if x._id == res_id), None)
         if res is None:
             return False
         res.reservationEnd = int(time.time())
@@ -136,7 +151,13 @@ class RentalReservationTimerTask:
         return RENTAL_DB.endReservation(res)
 
     def getRental(self, rent_id):
-        return next(x for x in self.active_rentals if x.rent._id == rent_id)
+        return next((x for x in self.active_rentals if x.rent._id == rent_id), None)
+
+    def updateDistance(self, car_id, lat, long):
+        res = next((x for x in self.active_rentals if x.car_id == car_id), None)
+        if res is not None:
+            res: PendingRental
+            res.update_distance(long, lat)
 
 
 app: Flask
@@ -149,6 +170,10 @@ MINIMAL_BALANCE = 10
 TOO_LONG_RENTAL_PUNISHMENT = 200
 MAX_RENTAL_TIME = 3600 * 24
 PHOTOS_TARGET: str
+
+MIDDLE_LAT = "51.107737"
+MIDDLE_LONG = "17.038717"
+MAX_DISTANCE = 10000
 
 
 def runTests():

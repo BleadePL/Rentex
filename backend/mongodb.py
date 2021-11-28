@@ -203,7 +203,7 @@ class MongoDBInterface(DatabaseInterface):
         for car in self.rentalDb["Car"].find():
             if calculate_gps_distance((float(location[0]), float(location[1])),
                                       (float(car["currentLocationLat"]),
-                                       float(car["currentLocationLong"]))) <= distance:
+                                       float(car["currentLocationLong"]))) <= int(distance):
                 cars.append(Car.from_dict(convertObjectIdsToStr(car)))
         return cars
 
@@ -347,7 +347,7 @@ class MongoDBInterface(DatabaseInterface):
         cars = self.browseNearestCars(location, distance)
         if cars is None:
             return None
-        return cars[pageIndex: pageIndex+pageCount]
+        return cars[int(pageIndex): int(pageIndex) + int(pageCount)]
 
     def deleteCar(self, carId):
         result = self.rentalDb["Car"].delete_one({ObjectId(carId)})

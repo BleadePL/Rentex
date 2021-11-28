@@ -1,10 +1,11 @@
 from flask import request, Response, Request
 from flask_login import login_user, logout_user, login_required, current_user
 
+from backend.models import Location
 from database_access import RENTAL_DB
 from flask_main import app, login, EMPTY_OK, BAD_REQUEST
 
-from utils import parse_required_fields
+from utils import parse_required_fields, calculate_gps_distance
 
 
 @app.route("/service", methods=["POST"])
@@ -15,7 +16,19 @@ def startService():
     parsed = parse_required_fields(request.json, ["carId"])
     if parsed is None:
         return BAD_REQUEST
-    id = RENTAL_DB.serviceCar(parsed["carId"])
+    if "desc" in request.json:
+        parsed["desc"] = request.json["desc"]
+    else:
+        parsed["desc"] = "Rutynowa kontrola"
+
+    car = RENTAL_DB.getCar(parsed["carId"])
+    l = RENTAL_DB.browseNearestLocations((car.currentLocationLat, car.currentLocationLong), 10000)  # TODO
+    l.sort(key=lambda d: calculate_gps_distance((float(car.currentLocationLat), float(car.currentLocationLong)),
+                                                (float(d.locationLat), float(d.locationLong))))
+    loc: Location = l[0]
+    if loc is None:
+        return BAD_REQUEST
+    id = RENTAL_DB.serviceCar(parsed["carId"], current_user.get_id(), loc._id, "Serwis 1234")
     if id is None:
         return BAD_REQUEST
     return {"serviceId": id}, 200
@@ -26,7 +39,7 @@ def startService():
 def getService(service_id: str):
     s = RENTAL_DB.getService(service_id)
     if s is None:
-        return BAD_REQUEST
+        return {}, 201
     return s, 200
 
 

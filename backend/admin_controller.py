@@ -1,3 +1,4 @@
+import json
 import os
 
 from flask import request, send_file
@@ -5,7 +6,7 @@ from flask_login import login_required
 
 from backend.models import Car, Location
 from database_access import RENTAL_DB
-from flask_main import app, BAD_REQUEST, EMPTY_OK, PHOTOS_TARGET
+from flask_main import app, BAD_REQUEST, EMPTY_OK, PHOTOS_TARGET, rental_timer_task
 from utils import parse_required_fields, is_latitude_valid, is_longitude_valid
 
 
@@ -32,11 +33,12 @@ def getCars():
                                    ["locationLat", "locationLong", "pagelength", "startindex", "distance"])
     if parsed is None:
         return BAD_REQUEST
-    cars = RENTAL_DB.getCars(parsed["pageIndex"], parsed["pageCount"], (parsed["locationLat"], parsed["locationLong"]),
+    cars = RENTAL_DB.getCars(parsed["startindex"], parsed["pagelength"],
+                             (parsed["locationLat"], parsed["locationLong"]),
                              parsed["distance"])
     if cars is None:
         return BAD_REQUEST
-    return {"cars": cars}, 200
+    return {"cars": list(map(lambda car: json.dumps(car.__dict__), cars))}, 200
 
 
 @app.route("/admin/car/<car_id>", methods=["DELETE"])
@@ -170,17 +172,7 @@ def patchLocation(location_id):
     return BAD_REQUEST
 
 
-@app.route("/admin/carpos", methods=["POST"])
-def setCarPos():
-    if request.json is None:
-        return BAD_REQUEST
-    parse = parse_required_fields(request.json, ["carid", "long", "lat"])
-    if parse is None:
-        return BAD_REQUEST
-    if RENTAL_DB.patchCar(parse["carid"], {'currentLocationLat': parse["lat"], 'currentLocationLong': parse["long"]}):
-        return EMPTY_OK
-    else:
-        return BAD_REQUEST
+
 
 
 # TODO: Zrobic je kiedys
@@ -229,3 +221,17 @@ def deleteAccount():
     if RENTAL_DB.deleteUser(parse["userid"]):
         return EMPTY_OK
     return BAD_REQUEST
+
+
+@app.route("/admin/carpos", methods=["POST"])
+def setCarPos():
+    if request.json is None:
+        return BAD_REQUEST
+    parse = parse_required_fields(request.json, ["carid", "long", "lat"])
+    if parse is None:
+        return BAD_REQUEST
+    if RENTAL_DB.patchCar(parse["carid"], {'currentLocationLat': parse["lat"], 'currentLocationLong': parse["long"]}):
+        rental_timer_task.updateDistance(parse["carid"], parse["lat"], parse["long"])
+        return EMPTY_OK
+    else:
+        return BAD_REQUEST
