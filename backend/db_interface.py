@@ -1,10 +1,20 @@
 from models import *
 
 
-# TODO: POPprzenosiłem
-
-
 class DatabaseInterface:
+
+    def __init__(self, **kwargs):
+        """
+        Here, we should pass login, password, and stuff like urls
+        :param kwargs:
+        """
+        pass
+
+    def initDatabase(self):
+        """
+        I add these things, because we need some initializations to do inside
+        """
+        pass
 
     def authUser(self, login, password):
         """
@@ -26,21 +36,6 @@ class DatabaseInterface:
        :param pesel:
        :return None if any error, user_id if success
        """
-        pass
-
-    def registerUser(self, name: str, surname: str, gender: str, login: str, password: str, address: str, email: str,
-                     pesel: str) -> str:
-        """
-        :param name:
-        :param surname:
-        :param gender:
-        :param login:
-        :param password:
-        :param address:
-        :param email:
-        :param pesel:
-        :return None if any error, user_id if success
-        """
         pass
 
     def getUserToken(self, userId: str):
@@ -303,4 +298,10 @@ class DatabaseInterface:
         :rtype: int
         :returns positive balance if success, -1 if not success
         """
+        pass
+
+    def isUserWithEmailInDB(self, email) -> bool:
+        pass
+
+    def isUserWithLoginInDB(self, login) -> bool:
         pass

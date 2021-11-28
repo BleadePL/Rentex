@@ -20,7 +20,7 @@ def getUserDetails():
     user = RENTAL_DB.getUser(userId=current_user.get_id())
     if user is None:
         print("THIS IS ILLEGAL STATE")
-        return 500
+        return BAD_REQUEST
 
     return {
         "userId": user._id,

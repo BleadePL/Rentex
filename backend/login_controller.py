@@ -44,7 +44,7 @@ def loginToSystem():
     if l == "test" and pas == "test":
         user_id = "test123"
     else:
-        user_id = RENTAL_DB.authUser(l, pas.encode("utf-8"))
+        user_id = RENTAL_DB.authUser(l, pas)
     if user_id is not None:
         u = next((user for user in logged_in_users if user.get_id() == user_id), None)
         if u is not None:
@@ -91,11 +91,13 @@ def getStatus():
 @app.route("/login/register", methods=["POST"])
 def register():
     if request.json is None:
-        return {'error': "UNKNOWN"}, 400
+        return {'error': "INVALID_REQUEST"}, 400
 
     register_request = parse_required_fields(request.json,
-                                             ["name", "surname", "gender", "login", "password", "address", "email",
+                                             ["name", "surname", "login", "password", "address", "email",
                                               "pesel"])
+    if register_request is None:
+        return {'error': "INVALID_REQUEST"}, 400
     if RENTAL_DB.isUserWithEmailInDB(register_request["email"]):
         return {'error': "EMAIL_USED"}, 400
     elif RENTAL_DB.isUserWithLoginInDB(register_request["login"]):
@@ -103,8 +105,8 @@ def register():
 
     # TODO: Validation of other data
     user_id = RENTAL_DB.registerUser(name=register_request["name"], surname=register_request["surname"],
-                                     gender=register_request["gender"], login=register_request["login"],
-                                     password=register_request["passwprd"], address=register_request["address"],
+                                     login=register_request["login"],
+                                     password=register_request["password"], address=register_request["address"],
                                      email=register_request["email"], pesel=register_request["pesel"])
     if user_id is None:
         return {"error": "UNKNOWN"}, 400

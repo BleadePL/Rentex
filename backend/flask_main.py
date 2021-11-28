@@ -10,6 +10,8 @@ from backend.models import Rental, Car, Reservation, CreditCard
 from flask_cors import CORS
 import schedule
 
+TESTS = True
+
 
 class LoggedInUser:
     def __init__(self, user_id, session_token):
@@ -141,7 +143,27 @@ rental_timer_task: RentalReservationTimerTask
 MAX_RESERVATION_TIME = 300
 MINIMAL_BALANCE = 10
 
-print(__name__)
+
+def runTests():
+    from test_backend import Tests, TEST_FUNCTIONS
+    with app.test_client() as client:
+        t = Tests(client)
+        print(TEST_FUNCTIONS)
+
+        # attrs = (getattr(t, name) for name in dir(t))
+        # import inspect
+        # methods = filter(inspect.ismethod, attrs)
+        for method in TEST_FUNCTIONS:
+            try:
+                print("TESTING: " + method.__name__)
+                if method.__name__ != "__init__":
+                    method(t)
+            except AssertionError:
+                assert False
+                # Can't handle methods with required arguments.
+                pass
+
+
 if __name__ == "flask_main":
     app = Flask("Wypozyczalnia Aut BACKEND")
     app.secret_key = secrets.token_hex()
@@ -166,4 +188,9 @@ if __name__ == "flask_main":
             time.sleep(1)
 
 
-    threading.Thread(target=loop).start()
+    t = threading.Thread(target=loop)
+    t.setDaemon(True)
+    t.start()
+    if TESTS:
+        runTests()
+        exit(0)

@@ -7,7 +7,7 @@ from models import *
 
 from utils import calculate_gps_distance
 
-salt = b'$2b$12$pzEs7Xy4xlrgcpLSrcN71O' #Temp
+salt = b'$2b$12$pzEs7Xy4xlrgcpLSrcN71O'  # Temp
 
 HOSTNAME = "vps.zgrate.ovh"
 PORT = "27017"
@@ -20,8 +20,10 @@ COLLECTION_CAR = "Car"
 COLLECTION_LOCATION = "Location"
 COLLECTION_RENTAL_ARCHIVE = "RentalArchive"
 
+DB_TESTS = False
 
 client = MongoClient("mongodb://" + USERNAME + ":" + PASSWORD + "@" + HOSTNAME + ":" + PORT + "/", connect=True)
+
 
 class MongoDBInterface(DatabaseInterface):
 
@@ -29,14 +31,14 @@ class MongoDBInterface(DatabaseInterface):
         super().__init__()
         self.rentalDb = client[DB_NAME]
 
-
     def authUser(self, login, password):
         """
         :param login:
         :param password:
         :return None if not authorized, user_id if authorized
         """
-        user = self.rentalDb["User"].find_one({"login": login, "password": bcrypt.hashpw(password.encode('utf8'), salt)})
+        user = self.rentalDb["User"].find_one(
+            {"login": login, "password": bcrypt.hashpw(password.encode('utf8'), salt)})
         if user is None:
             return None
         return User.from_dict(user)
@@ -90,7 +92,7 @@ class MongoDBInterface(DatabaseInterface):
     def getUserToken(self, userId: str):
         pass
 
-    def getAccountStatus(self, userId:str):
+    def getAccountStatus(self, userId: str):
         """
 
         :param userId:
@@ -102,7 +104,7 @@ class MongoDBInterface(DatabaseInterface):
         )
         if userStatus is None:
             return None
-        return userStatus["status"] # TODO: check if this returns value
+        return userStatus["status"]  # TODO: check if this returns value
 
     def getActivationToken(self, userId: str):
         """
@@ -161,7 +163,7 @@ class MongoDBInterface(DatabaseInterface):
             return False
         return True
 
-    def updateLocation(self, carId, location: tuple[str, str]): # TODO: check coords?
+    def updateLocation(self, carId, location: tuple[str, str]):  # TODO: check coords?
         result = self.rentalDb["Car"].update_one(
             {"_id": carId},
             {'$set': {"currentLocationLat": location[0], "currentLocationLong": location[1]}})
@@ -173,7 +175,7 @@ class MongoDBInterface(DatabaseInterface):
             rental = self.rentalDb["RentalArchive"].find_one({"_id": ObjectId(rentalId)})
             if rental is not None:
                 rentals.append(Rental.from_dict(rental))
-        return rentals[pageIndex:pageIndex+pageLength]
+        return rentals[pageIndex:pageIndex + pageLength]
 
     def getCards(self, userId):
         cards = []
@@ -200,9 +202,9 @@ class MongoDBInterface(DatabaseInterface):
     def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
         cars = []
         for car in self.rentalDb["Car"].find():
-            if  calculate_gps_distance((float(location[0]), float(location[1])),
-                                          (float(car["currentLocationLat"]), 
-                                          float(car["currentLocationLong"]))) <= distance:
+            if calculate_gps_distance((float(location[0]), float(location[1])),
+                                      (float(car["currentLocationLat"]),
+                                       float(car["currentLocationLong"]))) <= distance:
                 cars.append(Car.from_dict(car))
         return cars
 
@@ -231,7 +233,7 @@ class MongoDBInterface(DatabaseInterface):
         result.userId = userId
         return result
 
-    def endReservation(self, reservation:Reservation):
+    def endReservation(self, reservation: Reservation):
         reservation_ = self.rentalDb["User"].find_one({"_id": reservation.userId}, {"reservation": 1})
         if reservation_ is None or reservation_["_id"] != reservation.carId:
             return False
@@ -240,18 +242,18 @@ class MongoDBInterface(DatabaseInterface):
         return True
 
     def startReservation(self, reservation: Reservation):
-        if self.rentalDb["Car"].find_one({"_id": reservation.carId})["status"] != "ACTIVE": 
+        if self.rentalDb["Car"].find_one({"_id": reservation.carId})["status"] != "ACTIVE":
             return False
         user = self.rentalDb["User"].find_one({"_id": reservation.userId})
         if user["currentRental"] != "" or user["reservation"] != "":
             return False
-        self.rentalDb["User"].find_and_modify({"_id": reservation.userId}, 
-                {"$set": {"reservation": {
-                    "_id": ObjectId(),
-                    "reservationStart": reservation.reservationStart,
-                    "reservationsEnd": reservation.reservationEnd,
-                    "car": reservation.carId
-                }}})
+        self.rentalDb["User"].find_and_modify({"_id": reservation.userId},
+                                              {"$set": {"reservation": {
+                                                  "_id": ObjectId(),
+                                                  "reservationStart": reservation.reservationStart,
+                                                  "reservationsEnd": reservation.reservationEnd,
+                                                  "car": reservation.carId
+                                              }}})
         self.rentalDb["Car"].find_and_modify({"_id": reservation.carId}, {"$set": {"status": "RESRVED"}})
         return True
 
@@ -267,7 +269,7 @@ class MongoDBInterface(DatabaseInterface):
     def adminActive(self, userId):
         pass
 
-    def acceptDocuments(self):
+    def acceptDocuments(self, userId):
         pass
 
     def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):
@@ -309,27 +311,29 @@ class MongoDBInterface(DatabaseInterface):
     def serviceCar(self, carId):
         pass
 
-    def endService(self, carId, serviceId):
+    def endService(self, serviceId):
         pass
 
-    def getService(self, cardId, serviceId):
+    def getService(self, serviceId):
         pass
 
     def getServicesHistory(self, carId):
         pass
 
+
 RENTAL_DB = MongoDBInterface()
-print(RENTAL_DB.registerUser("asd", "asd", "asdddd", "asd", "asd", "asd", "asd"))
-print(RENTAL_DB.getUser(ObjectId("61a27e387ba5e03ad3acca39"))._id)
-print(RENTAL_DB.getAccountStatus(ObjectId("61a27e387ba5e03ad3acca39")))
-print(RENTAL_DB.activateAccount(ObjectId("61a27e387ba5e03ad3acca39")))
-print(RENTAL_DB.getAccountStatus(ObjectId("61a27e387ba5e03ad3acca39")))
-print(RENTAL_DB.getActivationToken(ObjectId("61a27e387ba5e03ad3acca39")))
-print(RENTAL_DB.setActivationToken(ObjectId("61a27e387ba5e03ad3acca39"), "aasdasd"))
-print(RENTAL_DB.getActivationToken(ObjectId("61a27e387ba5e03ad3acca39")))
-print(RENTAL_DB.changePassword(ObjectId("61a27e387ba5e03ad3acca39"), "dsad"))
-print(RENTAL_DB.rentalHistory(ObjectId("61a27e387ba5e03ad3acca39"),0, 1))
-# print(RENTAL_DB.addCard(ObjectId("61a27e387ba5e03ad3acca39"), CreditCard("123123123", "123123", "2022-11-02","asdasd", "asdasd")))
-print(RENTAL_DB.getCards(ObjectId("61a27e387ba5e03ad3acca39")))
-# print(RENTAL_DB.deleteCard(ObjectId("61a27e387ba5e03ad3acca39")))
-print(RENTAL_DB.browseNearestCars(("51.067883", "16.973298"), 2000))
+if DB_TESTS:
+    print(RENTAL_DB.registerUser("asd", "asd", "asdddd", "asd", "asd", "asd", "asd"))
+    print(RENTAL_DB.getUser(ObjectId("61a27e387ba5e03ad3acca39"))._id)
+    print(RENTAL_DB.getAccountStatus(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(RENTAL_DB.activateAccount(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(RENTAL_DB.getAccountStatus(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(RENTAL_DB.getActivationToken(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(RENTAL_DB.setActivationToken(ObjectId("61a27e387ba5e03ad3acca39"), "aasdasd"))
+    print(RENTAL_DB.getActivationToken(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(RENTAL_DB.changePassword(ObjectId("61a27e387ba5e03ad3acca39"), "dsad"))
+    print(RENTAL_DB.rentalHistory(ObjectId("61a27e387ba5e03ad3acca39"), 0, 1))
+    # print(RENTAL_DB.addCard(ObjectId("61a27e387ba5e03ad3acca39"), CreditCard("123123123", "123123", "2022-11-02","asdasd", "asdasd")))
+    print(RENTAL_DB.getCards(ObjectId("61a27e387ba5e03ad3acca39")))
+    # print(RENTAL_DB.deleteCard(ObjectId("61a27e387ba5e03ad3acca39")))
+    print(RENTAL_DB.browseNearestCars(("51.067883", "16.973298"), 2000))
