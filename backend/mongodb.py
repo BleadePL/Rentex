@@ -285,16 +285,16 @@ class MongoDBInterface(DatabaseInterface):
         if user.reservation != "":
             self.endReservation(user.reservation) # TODO: save reservation in user as object
         # add the rental
-        if self.patchCar(carId, {'$set': {"status": "INUSE"}}) is None:
+        if self.patchCar(carId, {"status": "INUSE"}) is None:
             return None
         rentalId = ObjectId()
-        if self.patchUser(userId, {'$set': {"currentRental": {
+        if self.patchUser(userId, {"currentRental": {
                 '_id': rentalId,
                 'rentalStart': datetime.utcnow(),
                 'mileage': car.mileage,
                 'ended': False,
-                'car': ObjectId(carId)}}}) is None:
-            self.patchCar(carId, {'$set': {"status": "ACTIVE"}})
+                'car': ObjectId(carId)}}) is None:
+            self.patchCar(carId, {"status": "ACTIVE"})
             return None
         return convertObjectIdsToStr(rentalId)
 
@@ -330,9 +330,9 @@ class MongoDBInterface(DatabaseInterface):
                 (rental.rentalEnd - rental.rentalStart).total_seconds() / 60.0)
         rental.ended = True
         # update car
-        self.patchCar(car._id, {"$set" : {"lastUsed": rental.rentalEnd, "status": "ACTIVE"}})
+        self.patchCar(car._id, {"lastUsed": rental.rentalEnd, "status": "ACTIVE"})
         # update user
-        self.patchUser(user._id, {"$set": {"currentRental": ""}})
+        self.patchUser(user._id, {"currentRental": ""})
         # move rental to RentalArchive
         self.rentalDb["RentalArchive"].insert_one({
             "_id": ObjectId(rental._id),
@@ -356,19 +356,40 @@ class MongoDBInterface(DatabaseInterface):
         pass
 
     def deleteCar(self, carId):
-        pass
+        result = self.rentalDb["Car"].delete_one({ObjectId(carId)})
+        return result.deleted_count != 0
 
     def patchCar(self, carId, changes: dict):
-        pass
+        if any(change in changes for change in ["chargeLevel", "mileage", "currentLocationLat", "currentLocationLong"]):
+            changes["lastUpdateTime"] = datetime.utcnow()
+        result = self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)}, {"$set": changes}) # TODO: REMOVE "$set"
+        return result is not None
+
 
     def getUsers(self, pageIndex, pageCount, filter: str):
-        pass
+        filter = f".*{filter}.*"
+        users = []
+        for user in self.rentalDb["User"].find({"$or": [
+                            {"pesel": {"$regex": filter}},
+                            {"surname": {"$regex": filter}},
+                            {"name": {"$regex": filter}},
+                            {"address": {"$regex": filter}},
+                            {"driverLicenceNumber": {"$regex": filter}},
+                            {"login": {"$regex": filter}},
+                            {"email": {"$regex": filter}},
+                            {"accountType": {"$regex": filter}},
+                            {"status": {"$regex": filter}},
+                            {"role": {"$regex": filter}},
+                            ]}).skip(pageIndex).limit(pageCount):
+            users.append(User.from_dict(convertObjectIdsToStr(user)))
+        return users
 
     def deleteUser(self, userId):
-        pass
+        result = self.patchUser(userId, {"status": "DELETED"})
 
     def patchUser(self, userId, changes: dict):
-        pass
+        result = self.rentalDb["User"].find_one_and_update({"_id": ObjectId(userId)}, changes)
+        return result is not None
 
     def getUserRentalHistory(self, userId, pageIndex, pageLength):
         pass
@@ -396,6 +417,8 @@ class MongoDBInterface(DatabaseInterface):
 
     def getServicesHistory(self, carId):
         pass
+
+
 
 
 RENTAL_DB = MongoDBInterface()
