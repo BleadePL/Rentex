@@ -99,7 +99,8 @@ def generateCreditCards(howMany:int, users):
 
 def generateLocations(howMany:int):
     retList = ([],[])
-    locationTypes = ["STATION","CLEAN","SERVICE","SPECIAL_POINT","UNKNOWN"]
+    locationTypes = ["STATION","CLEAN","SERVICE","SPECIAL_POINT","UNKNOWN"],
+    statuses = ["ACTIVE"] *3 + ["UNKNOWN", "INACTIVE"]
     for _ in range(howMany):
         id = ObjectId()
         retList[1].append(id)
@@ -111,6 +112,7 @@ def generateLocations(howMany:int):
             'leaveReward':str(round(random.uniform(20.00, 50.00), 2)),
             'locationLat':str(round(random.uniform(51.067883, 51.149147), 6)),
             'locationLong':str(round(random.uniform(16.973298, 17.106507), 6)),
+            'status': statuses[random.randint(0, len(statuses)-1)],
         })
     return retList
 

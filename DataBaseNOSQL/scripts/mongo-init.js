@@ -105,7 +105,7 @@ db.createCollection( "Car", {
                 description: "must be a date"
             },
             status: {
-                enum : ['ACTIVE','RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN'],
+                enum : ['ACTIVE','RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN', 'DELETED'],
                 description: "must be ['ACTIVE','RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN'] and is required"
             },
             activationCost: {
@@ -309,7 +309,7 @@ db.createCollection( "User", {
 db.createCollection( "Location", {
     validator: { $jsonSchema: {
         bsonType: "object",
-        required: [ "locationType", "locationName","locationAddress","leaveReward","locationLat","locationLong"],
+        required: [ "locationType", "locationName","locationAddress","leaveReward","locationLat","locationLong","status"],
         properties: {
             locationType: {
                 enum: ["STATION","CLEAN","SERVICE","SPECIAL_POINT","UNKNOWN"],
@@ -334,6 +334,10 @@ db.createCollection( "Location", {
             locationLong: {
                 bsonType: "string",
                 description: "must be a string and is required"
+            },
+            status: {
+                enum : ['ACTIVE', 'UNKNOWN', 'DELETED'],
+                description: "must be ['ACTIVE', 'UNKNOWN', 'DELETED'] and is required"
             }
         }
     } }
