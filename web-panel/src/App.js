@@ -3,6 +3,7 @@ import {BrowserRouter as Router, useNavigate, Route, Routes} from "react-router-
 import API_Session from "./API_Connector";
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import DescriptionTable from './components/DescripionTable';
 import './App.css'
 
 const api = new API_Session();
@@ -16,7 +17,8 @@ function App() {
   }
 
   const [user, setUser] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
-  const [error, setError] = useState("");
+  const [error, setError] = useState();
+  const [data, setData] = useState({name: "", surname: "", login: "", address: "", email: "", pesel: ""});
 
   const Login = details =>{
     console.log(details);
@@ -53,6 +55,15 @@ function App() {
         pesel: "60060535351"
       });
 
+      setData({
+        login: details.login,
+        name: details.name,
+        surname: details.surname,
+        address: details.address,
+        email: details.email,
+        pesel: details.pesel
+      });
+
       navigate("/loggedIn");
   
     }
@@ -81,7 +92,7 @@ function App() {
   }
 
   const Register = details => {
-    api.register(details.name, details.surname, details.gender, details.login, details.password, details.address, details.email, details.pesel, setError("success"), setError("Failure"));
+    //api.register(details.name, details.surname, details.gender, details.login, details.password, details.address, details.email, details.pesel, setError("success"), setError("Failure"));
 
     if(error == "success" || 1 == 1){
       setUser({
@@ -98,6 +109,14 @@ function App() {
         email: details.email,
         pesel: details.pesel
       });
+      setData({
+        login: details.login,
+        name: details.name,
+        surname: details.surname,
+        address: details.address,
+        email: details.email,
+        pesel: details.pesel
+      });
       navigate("/loggedIn");
       console.log(details);
     }
@@ -108,6 +127,10 @@ function App() {
   }
 
   const BrowseCars = () => {
+
+  }
+
+  const UserDescription = () =>{
 
   }
 
@@ -150,8 +173,16 @@ function App() {
                   <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li>
                   <li><button name="browse-cars" onClick={BrowseCars}>Browse available cars</button></li>
                   <li><button name="reserved-car">Reserved car</button></li>
+                  <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
                   <li><button name="logout" onClick={Logout}>Logout</button></li>
                 </ul>
+              </div>
+          }/>
+
+          <Route path="/userDescr" element={
+              <div>
+                <DescriptionTable data={data}/>
+                <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
               </div>
           }/>
 
