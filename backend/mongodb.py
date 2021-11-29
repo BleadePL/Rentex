@@ -102,7 +102,7 @@ class MongoDBInterface(DatabaseInterface):
         )
         if userStatus is None:
             return None
-        return userStatus["status"]  # TODO: check if this returns value
+        return userStatus["status"]
 
     def getActivationToken(self, userId: str):
         """
@@ -162,7 +162,7 @@ class MongoDBInterface(DatabaseInterface):
             return False
         return True
 
-    def updateLocation(self, carId, location: tuple[str, str]):  # TODO: check coords?
+    def updateLocation(self, carId, location: tuple[str, str]):
         result = self.rentalDb["Car"].update_one(
             {"_id": ObjectId(carId)},
             {'$set': {"currentLocationLat": location[0], "currentLocationLong": location[1]}})
@@ -248,20 +248,20 @@ class MongoDBInterface(DatabaseInterface):
 
     def startReservation(self, reservation: Reservation) -> str:
         if self.rentalDb["Car"].find_one({"_id": ObjectId(reservation.carId)})["status"] != "ACTIVE":
-            return False
+            return None
         user = self.rentalDb["User"].find_one({"_id": ObjectId(reservation.userId)})
         if user["status"] != "ACTIVE" or user["currentRental"] != "" or user["reservation"] != "":
-            return False
+            return None
+        id = ObjectId()
         self.rentalDb["User"].find_and_modify({"_id": ObjectId(reservation.userId)},
                                               {"$set": {"reservation": {
-                                                  "_id": ObjectId(),
+                                                  "_id": id,
                                                   "reservationStart": reservation.reservationStart,
                                                   "reservationsEnd": reservation.reservationEnd,
                                                   "car": ObjectId(reservation.carId)
                                               }}})
-        self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)}, {"$set": {"status": "RESERVED"}})
-        # TODO GET ID HERE
-        return True
+        self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)}, {"$set": {"status": "RESRVED"}})
+        return convertObjectIdsToStr(id)
 
     def startRental(self, userId, carId):
         car = self.getCar(carId)
@@ -330,7 +330,7 @@ class MongoDBInterface(DatabaseInterface):
         # update car
         self.patchCar(car._id, {"lastUsed": rental.rentalEnd, "status": "ACTIVE"})
         # update user
-        self.patchUser(user._id, {"currentRental": ""})
+        self.patchUser(user._id, {"$set": {"currentRental": ""}}) 
         # move rental to RentalArchive
         self.rentalDb["RentalArchive"].insert_one({
             "_id": ObjectId(rental._id),
@@ -357,8 +357,7 @@ class MongoDBInterface(DatabaseInterface):
     def patchCar(self, carId, changes: dict):
         if any(change in changes for change in ["chargeLevel", "mileage", "currentLocationLat", "currentLocationLong"]):
             changes["lastUpdateTime"] = datetime.utcnow()
-        result = self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)},
-                                                          {"$set": changes})  # TODO: REMOVE "$set"
+        result = self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)}, {"$set": changes}, upsert=True) # TODO: REMOVE "$set"
         return result is not None
 
     def getUsers(self, pageIndex, pageCount, filter: str):
@@ -425,14 +424,14 @@ class MongoDBInterface(DatabaseInterface):
 
     def serviceCar(self, carId, userId, locationId, description=""):  # TODO: remove $set from patch car
         service = {"dateStart": datetime.utcnow(),
-                   "leftBy": ObjectId(userId),
-                   "location": ObjectId(locationId),
-                   "description": description}
-        if self.patchCar(ObjectId(carId), {{"$push": {"services": service}},
-                                           {"$set": {"status": "SERVICE"}}}):
+                    "leftBy": ObjectId(userId),
+                    "location": ObjectId(locationId),
+                    "description": description}
+        if self.patchCar(ObjectId(carId), {"$push": {"services": service}},
+                    {"$set": {"status": "SERVICE"}}):
             service["carId"] = carId
             return Service.from_dict(convertObjectIdsToStr(service))
-        return None  # TODO: set client balance
+        return None
 
     def endService(self, service: Service):
         service = self.rentalDb["Car"].find_one_and_update(
