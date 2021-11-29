@@ -87,7 +87,7 @@ class RentalReservationTimerTask:
                 e.overtime = True
 
         for e in self.active_reservations:
-            if time.time() - e.reservationStart > MAX_RESERVATION_TIME or e.ended:
+            if time.time() - e.reservationStart > MAX_RESERVATION_TIME or e.reservationEnd is not None:
                 self.endReservation(e)
 
     def rent(self, car: Car, user_id, payment_method, cvv: int = None, card: CreditCard = None) -> [None, str]:

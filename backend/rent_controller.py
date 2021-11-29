@@ -27,7 +27,7 @@ def deleteReservation(reservation_id: str):
 @app.route("/rent/reservate", methods=["POST"])
 @login_required
 def reservate():
-    if request.json in None or "carId" not in request.json:
+    if request.json is None or "carId" not in request.json:
         return BAD_REQUEST
     resId = rental_timer_task.startReservation(car_id=request.json["carId"], user_id=current_user.get_id())
     if resId is None:

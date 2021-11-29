@@ -16,7 +16,7 @@ def addNewCar():
         return BAD_REQUEST
     parse = parse_required_fields(request.json, {
         "brand", "regNumber", "model", "seats", "charge", "activationCost", "kmCost", "timeCost",
-        "locationLat", "locationLong", "status", "vin", "mileage", "esimPhoneNumber", "eSimImei"
+        "locationLat", "locationLong", "status", "vin", "mileage", "esimNumber", "esimImei", "regCountryCode"
     })
     if parse is None:
         return BAD_REQUEST
