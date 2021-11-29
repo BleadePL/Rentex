@@ -25,6 +25,8 @@ def startService():
     l = RENTAL_DB.browseNearestLocations((car.currentLocationLat, car.currentLocationLong), 10000)  # TODO
     l.sort(key=lambda d: calculate_gps_distance((float(car.currentLocationLat), float(car.currentLocationLong)),
                                                 (float(d.locationLat), float(d.locationLong))))
+    if len(l) == 0:
+        return BAD_REQUEST
     loc: Location = l[0]
     if loc is None:
         return BAD_REQUEST

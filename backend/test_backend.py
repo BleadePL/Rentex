@@ -51,7 +51,7 @@ class Tests:
         assert rv.status == "200 OK"
         print(rv.data)
 
-    @test
+    # @test
     def runStatusTest(self):
         rv = self.client.get("/login/status", content_type='application/json',
                              headers={"Session-Token": self.session_token})
@@ -62,7 +62,6 @@ class Tests:
     def runRegisterTest(self):
         rv = self.client.post("/login/register", data=json.dumps({"name": "Fryderyk",
                                                                   "surname": "Markowski",
-                                                                  "gender": "M",
                                                                   "login": "test",
                                                                   "password": "test",
                                                                   "address": "20;Sienkiewicza;60951;Tarnobrzeg;Polska",

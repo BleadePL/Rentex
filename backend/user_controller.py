@@ -68,7 +68,8 @@ def updateLocation():
 def getRentalHistory():
     pageIndex = int(request.args["startindex"])
     pageLength = min(int(request.args["pageLength"]), 20)
-    return RENTAL_DB.getUserRentalHistory(current_user.get_id(), pageIndex, pageLength)  # TODO: Suspiciously short
+    return {"rentals": list(map(lambda r: r.__dict__, RENTAL_DB.getUserRentalHistory(current_user.get_id(), pageIndex,
+                                                                                     pageLength)))}  # TODO: Suspiciously short
 
 
 @app.route("/user/cards", methods=["GET"])
@@ -130,6 +131,7 @@ def charge(card_id: str):
                                 gr_to_pln_gr(pln_gr_to_gr(user.balance) + int(request.json["amount"]) * 100))
         return EMPTY_OK
     return BAD_REQUEST
+
 
 @app.route("/user/card/<card_id>", methods=["DELETE"])
 @login_required
