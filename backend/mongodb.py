@@ -456,6 +456,8 @@ class MongoDBInterface(DatabaseInterface):
         car = self.rentalDb["Car"].find_one({"_id": ObjectId(carId)})
         if car is None:
             return services
+        if "services" not in car:
+            return services
         for service in car["services"]:
             service = Service.from_dict(convertObjectIdsToStr(service))
             service.carId = car["_id"]
@@ -510,6 +512,7 @@ class MongoDBInterface(DatabaseInterface):
             "timeCost": car["timeCost"],
             "esimNumber": car["esimNumber"],
             "esimImei": car["esimImei"],
+            "services": []
         })
         return convertObjectIdsToStr(result.inserted_id)
 

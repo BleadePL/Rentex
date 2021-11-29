@@ -39,14 +39,17 @@ def startService():
 def getService(service_id: str):
     s = RENTAL_DB.getService(service_id)
     if s is None:
-        return {}, 201
+        return {}, 204
     return s, 200
 
 
 @app.route("/service/<service_id>", methods=["DELETE"])
 @login_required
 def deleteService(service_id: str):
-    if RENTAL_DB.endService(service_id):
+    ser = RENTAL_DB.getService(service_id)
+    if ser is None:
+        return BAD_REQUEST
+    if RENTAL_DB.endService(ser):
         return EMPTY_OK
     else:
         return BAD_REQUEST
@@ -55,4 +58,4 @@ def deleteService(service_id: str):
 @app.route("/service/car/<car_id>", methods=["GET"])
 @login_required
 def getServices(car_id: str):
-    return RENTAL_DB.getServicesHistory(car_id), 200
+    return {"services": RENTAL_DB.getServicesHistory(car_id)}, 200

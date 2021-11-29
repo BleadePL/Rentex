@@ -139,7 +139,7 @@ class Tests:
         rv = self.client.post("/admin/user/61a4e940edf3e07d79a80e39/activate")
         assert rv.status == "200 OK"
 
-    @test
+    # @test
     def testRentalAndSearch(self):
         # Search for cars
         rv = self.client.get("/browse/nearestcars?locationLat=51.111593&locationLong=17.027287",
@@ -221,7 +221,7 @@ class Tests:
 
         # Wait a moment
         print("Let the reservation pass a little bit")
-        # sleep(5)
+        sleep(5)
 
         # Get it again
 
@@ -267,7 +267,7 @@ class Tests:
 
         # Gimmie some time!
         print("Drive the CAR")
-        # sleep(10)
+        sleep(10)
 
         # Move car some more
         rv = self.client.post("/admin/carpos", data=json.dumps({
@@ -279,7 +279,7 @@ class Tests:
 
         # Gimmie some time!
         print("Let the rental have some time")
-        # sleep(10)
+        sleep(10)
 
         # Get Cost
         rv = self.client.get("/rent/rent", headers={"Session-Token": self.session_token})
@@ -292,7 +292,7 @@ class Tests:
 
         # FINISH
 
-    # @test
+    @test
     def serviceCar(self):
         from flask_main import MIDDLE_LAT, MIDDLE_LONG
         rv = self.client.get(
@@ -317,8 +317,8 @@ class Tests:
                 "status": "ACTIVE",
                 "vin": "ASDSGFA123123123",
                 "mileage": 125123123,
-                "esimPhoneNumber": 125123123,
-                "eSimImei": "125123123"
+                "esimNumber": 125123123,
+                "esimImei": "125123123"
             }), content_type='application/json')
             assert rv.status == "200 OK"
             rv = self.client.get(
@@ -326,13 +326,13 @@ class Tests:
             assert rv.status == "200 OK"
             j = json.loads(rv.data.decode("utf-8"))
             assert len(j["cars"]) > 0
-        car = json.loads(j["cars"][0])
+        car = j["cars"][0]
         print(car)
 
         rv = self.client.get("/service/car/" + car["_id"], headers={"Session-Token": self.session_token},
                              content_type='application/json')
         print(rv.status)
-        assert rv.status == "201 EMPTY"
+        assert rv.status == "200 OK" or rv.status == "204 NO CONTENT"
 
         # service car
         rv = self.client.post("/service", data=json.dumps({"carId": car["_id"]}),

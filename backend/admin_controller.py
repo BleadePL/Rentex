@@ -38,7 +38,18 @@ def getCars():
                              parsed["distance"])
     if cars is None:
         return BAD_REQUEST
-    return {"cars": list(map(lambda car: json.dumps(car.__dict__), cars))}, 200
+
+    def getcars(car):
+        d = car.__dict__
+        from datetime import datetime
+        for e in d:
+            print(e)
+            print(type(d[e]) is datetime)
+            if type(d[e]) is datetime:
+                d[e] = str(d[e])
+        return d
+
+    return {"cars": list(map(lambda car: getcars(car), cars))}, 200
 
 
 @app.route("/admin/car/<car_id>", methods=["DELETE"])
