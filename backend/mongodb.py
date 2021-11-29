@@ -248,19 +248,20 @@ class MongoDBInterface(DatabaseInterface):
 
     def startReservation(self, reservation: Reservation):
         if self.rentalDb["Car"].find_one({"_id": ObjectId(reservation.carId)})["status"] != "ACTIVE":
-            return False
+            return None
         user = self.rentalDb["User"].find_one({"_id": ObjectId(reservation.userId)})
         if user["status"] != "ACTIVE" or user["currentRental"] != "" or user["reservation"] != "":
-            return False
+            return None
+        id = ObjectId()
         self.rentalDb["User"].find_and_modify({"_id": ObjectId(reservation.userId)},
                                               {"$set": {"reservation": {
-                                                  "_id": ObjectId(),
+                                                  "_id": id,
                                                   "reservationStart": reservation.reservationStart,
                                                   "reservationsEnd": reservation.reservationEnd,
                                                   "car": ObjectId(reservation.carId)
                                               }}})
         self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)}, {"$set": {"status": "RESRVED"}})
-        return True
+        return convertObjectIdsToStr(id)
 
     def startRental(self, userId, carId):
         car = self.getCar(carId)
