@@ -170,7 +170,7 @@ class DatabaseInterface:
         """
         pass
 
-    def startRental(self, userId, rent: Rental) -> None:
+    def startRental(self, userId, carId: str) -> None:
         """
         Check here, if there is no pending rental
         :param userId: User ID
@@ -271,11 +271,11 @@ class DatabaseInterface:
         """
         pass
 
-    def getCard(self, user_id, card_id) -> CreditCard:
+    def getCard(self, user_id, cardId) -> CreditCard:
         """
 
         :param user_id:
-        :param card_id:
+        :param cardId:
         :returns None if card not found or card is not a user card, CreditCard if it's okey
         """
         pass

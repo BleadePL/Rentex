@@ -61,16 +61,18 @@ class PendingRental:
         elif other is Rental:
             return self.rent._id == other._id
 
-    def update_distance(self, currentLong, currentLat):
+    def update_distance(self, currentLat, currentLong):
         from backend.utils import calculate_gps_distance
-        d = calculate_gps_distance((currentLong, currentLat), (currentLong, currentLat))
+        d = calculate_gps_distance((float(self.lastLat), float(self.lastLong)), (float(currentLat), float(currentLong)))
         if d > PendingRental.DISTANCE_THRESHOLD:
             self.distance += d
+        self.lastLat = currentLat
+        self.lastLong = currentLong
 
     def calculate_current_cost(self) -> int:
         timeCost = (int(time.time()) - self.rent.rentalStart) * self.timeCost
         return int(int(self.activationCost + timeCost + (
-                self.distance / 1000) * self.kmCost)) + TOO_LONG_RENTAL_PUNISHMENT if self.overtime else 0
+                self.distance / 1000) * self.kmCost)) + (TOO_LONG_RENTAL_PUNISHMENT if self.overtime else 0)
 
 
 class RentalReservationTimerTask:
@@ -81,9 +83,9 @@ class RentalReservationTimerTask:
 
     def tick(self):
         for e in self.active_rentals:
-            if e.ended:
+            if e.rent.ended:
                 self.endRent(e.rent)
-            elif not e.overtime and time.time() - e.rent.rental_start > MAX_RENTAL_TIME:
+            elif not e.overtime and time.time() - e.rent.rentalStart > MAX_RENTAL_TIME:
                 e.overtime = True
 
         for e in self.active_reservations:
@@ -100,9 +102,11 @@ class RentalReservationTimerTask:
         if payment_method == "PP":
             if RENTAL_DB.getBalance(user_id) < MINIMAL_BALANCE:
                 return None
-        rentalId = RENTAL_DB.startRental(userId=user_id, rent=r)
+        rentalId = RENTAL_DB.startRental(userId=user_id, carId=car._id)
         if rentalId is not None:
+            p.rent._id = rentalId
             self.active_rentals.append(p)
+            return rentalId
         return None
 
     def endRent(self, r_id) -> bool:
@@ -129,32 +133,32 @@ class RentalReservationTimerTask:
                 if RENTAL_DB.setNewBalance(user._id, user.balance + loc.leaveReward):
                     return True
                 return False
+            else:
+                return True
 
-            # self.locationLat = location_lat
-            # self.locationLong
-            from utils import calculate_gps_distance
 
     def startReservation(self, car_id, user_id) -> str:
         r = Reservation(car_id=car_id, user_id=user_id, reservation_start=int(time.time()))
         res_id = RENTAL_DB.startReservation(r)
         if res_id is None:
             return None
+        r._id = res_id
         self.active_reservations.append(r)
         return res_id
 
     def endReservation(self, res_id: str):
-        res = next((x for x in self.active_rentals if x._id == res_id), None)
+        res = next((x for x in self.active_reservations if x._id == res_id), None)
         if res is None:
             return False
         res.reservationEnd = int(time.time())
         self.active_reservations.remove(res)
         return RENTAL_DB.endReservation(res)
 
-    def getRental(self, rent_id):
+    def getRental(self, rent_id) -> PendingRental:
         return next((x for x in self.active_rentals if x.rent._id == rent_id), None)
 
     def updateDistance(self, car_id, lat, long):
-        res = next((x for x in self.active_rentals if x.car_id == car_id), None)
+        res = next((x for x in self.active_rentals if x.rent.carId == car_id), None)
         if res is not None:
             res: PendingRental
             res.update_distance(long, lat)

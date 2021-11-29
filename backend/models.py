@@ -58,12 +58,12 @@ class Car:
     Do not edit the class manually.
     """
 
-    def __init__(self, car_id: int = None, brand: str = None, reg_number: str = None, model: str = None,
+    def __init__(self, car_id: str = None, brand: str = None, reg_number: str = None, model: str = None,
                  seats: int = None, charge: int = None, activation_cost: str = None,
                  km_cost: str = None, time_cost: str = None, location_lat: str = None, location_long: str = None,
                  status: str = None, esimImei: str = None, esimNumber: str = None, mileage: int = 0,
                  vin: str = None, currentReservation: Reservation = None, reg_country_code=None,
-                 last_used=None,last_updateTime=None, services_ids: list[str] = None):  # noqa: E501
+                 last_used=None, last_updateTime=None, services_ids: list[str] = None):  # noqa: E501
         """Car - a model defined in Swagger
 
         :param car_id: The car_id of this Car.  # noqa: E501

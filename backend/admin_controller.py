@@ -235,3 +235,23 @@ def setCarPos():
         return EMPTY_OK
     else:
         return BAD_REQUEST
+
+
+@app.route("/admin/forcecleanreservation/<resid>/<userid>", methods=["DELETE"])
+def forceCleanReservation(resid, userid):
+    res = RENTAL_DB.getReservation(userid, resid)
+    if res is None:
+        return BAD_REQUEST
+    if RENTAL_DB.endReservation(res):
+        return EMPTY_OK
+    return BAD_REQUEST
+
+
+@app.route("/admin/forcecleanrental/<resid>/<userid>", methods=["DELETE"])
+def forceCleanRental(resid, userid):
+    res = RENTAL_DB.getRental(userid, resid)
+    if res is None:
+        return BAD_REQUEST
+    if RENTAL_DB.endRental(res):
+        return EMPTY_OK
+    return BAD_REQUEST

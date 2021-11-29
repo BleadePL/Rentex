@@ -107,7 +107,7 @@ def getCard(card_id: str):
         return BAD_REQUEST
 
     return {
-        "lastdigits": card.cardNumber[-4:],
+        "lastdigits": str(card.cardNumber)[-4:],
         "expiration": card.expirationDate,
         "holderName": card.cardHolderName
     }
