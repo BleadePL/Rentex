@@ -131,10 +131,10 @@ class API_Session{
      * @param email {string}
      * @param pesel {string}
      * @param success {function(string): void}
-     * @param failed {function(string): void}
+     * @param failure {function(string): void}
      * @returns {Promise<void>}
      */
-    async register(name, surname, gender, login, password, address, email, pesel, success, failed){
+    async register(name, surname, gender, login, password, address, email, pesel, success, failure){
         await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.LOGIN_REGISTER, {
             body: JSON.stringify({name: name, surname: surname, gender: gender, login: login, password: password, address: address, email: email, pesel: pesel}),
             method: "POST",
@@ -154,7 +154,7 @@ class API_Session{
                 console.log(data)
                 var s = data[0]
                 if(s === 400){
-                    failed(data[1]["error"])
+                    failure(data[1]["error"])
                 }
                 else{
                     success(data[1]["userId"])
@@ -241,10 +241,10 @@ class API_Session{
      *
      * @param activation_token
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @returns {Promise<void>}
      */
-    async activate(activation_token, success, failed){
+    async activate(activation_token, success, failure){
         await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.LOGIN_ACTIVATE + "?activation_token="+activation_token, {
             method: "GET",
             headers: {
@@ -256,7 +256,7 @@ class API_Session{
                 success()
             }
             else{
-                failed()
+                failure()
             }
 
         }).catch((error)=>{
@@ -269,22 +269,47 @@ class API_Session{
      * @param front
      * @param back
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @returns {Promise<*>}
      */
-    // async uploadPhoto(front, back, success, failed){
-    //     failed()
+    // async uploadPhoto(front, back, success, failure){
+    //     failure()
     //     return unimplemented
     // }
 
     /**
      *
      * @param success {function(json): void} USER Object
+     * @param failure
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async getUserDetails(success, auth_failed){
+    async getUserDetails(success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_DETAILS, {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else {
+                return "ERR"
+            }
 
+        }).then(data => {
+            if(data === "ERR"){
+                auth_failed()
+            } else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
@@ -292,11 +317,11 @@ class API_Session{
      * @param oldPass
      * @param newPass
      * @param success {function(): void}
-     * @param failed {function(string): void}
+     * @param failure
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async changeUserPassword(oldPass, newPass, success, failed, auth_failed){
+    async changeUserPassword(oldPass, newPass, success, failure, auth_failed){
 
     }
 
@@ -305,11 +330,46 @@ class API_Session{
      * @param locationLatitude
      * @param locationLongitude
      * @param success {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async updateLocation(locationLatitude, locationLongitude, success, auth_failed){
+    async updateLocation(locationLatitude, locationLongitude, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_UPDATELOCATION, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            },
+            body: JSON.stringify({
+                "locationLat": locationLatitude,
+                "locationLong": locationLongitude
+            })
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success()
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
@@ -317,22 +377,84 @@ class API_Session{
      * @param pageIndex
      * @param pageLength
      * @param success {function(json): void} list of rentals
+     * @param failure{function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async rentalHistory(pageIndex, pageLength, success, auth_failed){
+    async rentalHistory(pageIndex, pageLength, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_HISTORY, {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["rentals"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
      *
      * @param success {function(json): void} list of cards
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async getCards(success, auth_failed)
+    async getCards(success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_CARDS, {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["cards"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
@@ -343,48 +465,184 @@ class API_Session{
      * @param cvv
      * @param holderAddress
      * @param success {function(string): void} CARD ID
-     * @param failed {function(): void} AUTH_ERROR - blad autoryzacji karty, BLOCK_ERROR - blad przetwarzania transakcji, UNKNOWN - inny blad
+     * @param failure {function(string): void} AUTH_ERROR - blad autoryzacji karty, BLOCK_ERROR - blad przetwarzania transakcji, UNKNOWN - inny blad
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async addCard(cardNumber, expirationDate, cardHolder, cvv, holderAddress, success, failed, auth_failed){
+    async addCard(cardNumber, expirationDate, cardHolder, cvv, holderAddress, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_CARDS, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            },
+            body: JSON.stringify({
+                "cardNumber": cardNumber,
+                "expirationDate": expirationDate,
+                "cardHolder": cardHolder,
+                "cvv": cvv,
+                "holderAddress": holderAddress
+            })
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return response.json()
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure(data["error"])
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["cardId"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
      *
      * @param cardId
      * @param success {function(json): void} Card with details: lastdigits, expirations and holderName
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed
      * @returns {Promise<void>}
      */
-    async getCard(cardId, success, failed, auth_failed){
+    async getCard(cardId, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_CARD.replace("{0}", cardId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
      *
      * @param cardId
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async deleteCard(cardId, success, failed, auth_failed){
+    async deleteCard(cardId, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_CARD.replace("{0}", cardId), {
+            method: "DELETE",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success()
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
+
 
     /**
      *
      * @param cardId
+     * @param amount
+     * @param cvv
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async chargeCard(cardId, success, failed, auth_failed)
+    async chargeCard(cardId, amount, cvv, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.USER_CARD_CHARGE.replace("{0}", cardId), {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            },
+            body: JSON.stringify({
+                "amount": amount,
+                "cvv": cvv
+            })
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success()
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
@@ -394,10 +652,44 @@ class API_Session{
      * @param locationLong
      * @param distance
      * @param success {function(json): void} list of cars
+     * @param failure
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async getNearestCars(locationLat, locationLong, distance, success, auth_failed){
+    async getNearestCars(locationLat, locationLong, distance, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.BROWSE_NEARESTCARS + `?locationLat=${locationLat}&locationLong=${locationLong}&distance=${distance}`,
+    {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        })
+        .then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["cars"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
@@ -407,37 +699,130 @@ class API_Session{
      * @param locationLong
      * @param distance
      * @param success {function(json): void} List of locations
+     * @param failure
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async getNearestLocations(locationLat, locationLong, distance, success, auth_failed){
+    async getNearestLocations(locationLat, locationLong, distance, success,failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.BROWSE_NEARESTLOCATION + `?locationLat=${locationLat}&locationLong=${locationLong}&distance=${distance}`,
+            {
+                method: "GET",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Session-Token': this.SESSION_TOKEN
+                }
+            })
+            .then(response => {
+                if(response.ok){
+                    return response.json()
+                }
+                else if(response.status === 401){
+                    return "AUTH"
+                }
+                else{
+                    return "BR"
+                }
 
+            }).then(data => {
+                if(data === "BR"){
+                    failure()
+                }
+                else if(data === "AUTH"){
+                    auth_failed()
+                }else{
+                    success(data["locations"])
+                }
+
+            }).catch((error)=>{
+                API_Connector.ERROR_HANDLER(error)
+            })
     }
 
     /**
      *
      * @param carId
      * @param success {function(json): void} Car
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async browseCar(carId, success, failed, auth_failed)
+    async browseCar(carId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.BROWSE_CAR.replace("{0}", carId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
      *
      * @param locationId
      * @param success {function(json): void} Location
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async browseLocation(locationId, success, failed, auth_failed)
+    async browseLocation(locationId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.BROWSE_LOCATION.replace("{0}", locationId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
 
@@ -445,12 +830,43 @@ class API_Session{
      *
      * @param resId reservation Id
      * @param success {function(json): void} Reservation object
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async getReservation(resId, success, failed, auth_failed)
+    async getReservation(resId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RESERVATION.replace("{0}", resId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
@@ -458,12 +874,43 @@ class API_Session{
      *
      * @param resId reservation Id
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async endReservation(resId, success, failed, auth_failed)
+    async endReservation(resId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RESERVATION.replace("{0}", resId), {
+            method: "DELETE",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success()
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
@@ -473,12 +920,88 @@ class API_Session{
      *
      * @param carId
      * @param success {function(string): void} Reservation ID
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async reservate(carId, success, failed, auth_failed)
+    async reservate(carId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RESERVATE, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            },
+            body: JSON.stringify({"carId": carId})
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["resId"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
+
+    }
+
+
+    /**
+     *
+     * @param success {function(string): void} Reservation ID
+     * @param failure {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getUserReservation(success, failure, auth_failed)
+    {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RESERVATE, {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
@@ -488,38 +1011,175 @@ class API_Session{
      * @param cvv
      * @param paymentType PP or ID of creditcard
      * @param success {function(string): void} Rental ID
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async rent(carId, cvv, paymentType, success, failed, auth_failed)
+    async rent(carId, cvv, paymentType, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RENT, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            },
+            body: JSON.stringify({"carId": carId, "cvv":cvv, "paymentType": paymentType})
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
+    }
+
+    /**
+     *
+     * @param success {function(string): void} Reservation ID
+     * @param failure {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getUserRental(success, failure, auth_failed)
+    {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RENT, {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
+
+    }
+
+
+    /**
+     *
+     * @param rentId reservation Id
+     * @param success {function(json): void} Reservation object
+     * @param failure {function(): void}
+     * @param auth_failed {function(): void}
+     * @returns {Promise<void>}
+     */
+    async getRental(rentId, success, failure, auth_failed)
+    {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RENT_GET_DELETE.replace("{0}", rentId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
     /**
      *
-     * @param rentalId
-     * @param success {function(json): void} Rental object
-     * @param failed {function(): void}
-     * @param auth_failed {function(): void}
-     * @returns {Promise<void>}
-     */
-    async getRental(rentalId, success, failed, auth_failed)
-    {
-
-    }
-
-    /**
-     *
-     * @param rentalId Rental ID
+     * @param rentalId reservation Id
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async endRental(rentalId, success, failed, auth_failed)
+    async endRental(rentalId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.RENT_RENT_GET_DELETE.replace("{0}", rentalId), {
+            method: "DELETE",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success()
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
 
     }
 
@@ -527,39 +1187,165 @@ class API_Session{
      *
      * @param carId
      * @param success {function(string): void} Service ID
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async service(carId, success, failed, auth_failed)
+    async service(carId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.SERVICE, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            },
+            body: JSON.stringify({"carId": carId})
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["serviceId"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
      *
      * @param serviceId
      * @param success {function(json): void} Service object
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async getService(serviceId, success, failed, auth_failed)
+    async getService(serviceId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.SERVICE_GET_DELETE.replace("{0}", serviceId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data)
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 
     /**
      *
      * @param serviceId Service ID
      * @param success {function(): void}
-     * @param failed {function(): void}
+     * @param failure {function(): void}
      * @param auth_failed {function(): void}
      * @returns {Promise<void>}
      */
-    async endService(serviceId, success, failed, auth_failed)
+    async endService(serviceId, success, failure, auth_failed)
     {
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.SERVICE_GET_DELETE.replace("{0}", serviceId), {
+            method: "DELETE",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
 
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success()
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
+    }
+
+
+    async getServiceByCar(carId, success, failure, auth_failed){
+        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.SERVICE_CAR.replace("{0}", carId), {
+            method: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Session-Token': this.SESSION_TOKEN
+            }
+        }).then(response => {
+            if(response.ok){
+                return response.json()
+            }
+            else if(response.status === 401){
+                return "AUTH"
+            }
+            else{
+                return "BR"
+            }
+
+        }).then(data => {
+            if(data === "BR"){
+                failure()
+            }
+            else if(data === "AUTH"){
+                auth_failed()
+            }else{
+                success(data["services"])
+            }
+
+        }).catch((error)=>{
+            API_Connector.ERROR_HANDLER(error)
+        })
     }
 }
 
