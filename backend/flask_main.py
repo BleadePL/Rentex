@@ -121,7 +121,7 @@ class RentalReservationTimerTask:
         r.rent.ended = True
         r.rent.rentalEnd = int(time.time())
         r.rent.mileage = r.distance
-        r.rent.rentalCost = gr_to_pln_gr(cost)
+        r.rent.totalCost = gr_to_pln_gr(cost)
         if RENTAL_DB.endRental(r.rent):
             l = RENTAL_DB.browseNearestLocations((r.lastLat, r.lastLong), 200)
             if len(l) > 0:
@@ -161,7 +161,7 @@ class RentalReservationTimerTask:
         res = next((x for x in self.active_rentals if x.rent.carId == car_id), None)
         if res is not None:
             res: PendingRental
-            res.update_distance(long, lat)
+            res.update_distance(lat, long)
 
 
 app: Flask
@@ -194,7 +194,7 @@ def runTests():
                 print("TESTING: " + method.__name__)
                 if method.__name__ != "__init__":
                     method(t)
-            except AssertionError:
+            except AssertionError as ex:
                 assert False
                 # Can't handle methods with required arguments.
                 pass

@@ -82,9 +82,9 @@ def sendToken():
 def getStatus():
     s = RENTAL_DB.getAccountStatus(userId=current_user.get_id())
     if s is None:
-        return Response(status=500)
+        return {}, 400
     else:
-        return Response(response={"status": s})
+        return {"status": s}, 200
 
 
 @app.route("/login/register", methods=["POST"])

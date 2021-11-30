@@ -59,7 +59,7 @@ def getRentOfUser():
     if pending is not None:
         r = user.currentRental.copy()
         r["mileage"] = pending.distance
-        r["rentalCost"] = gr_to_pln_gr(pending.calculate_current_cost())
+        r["totalCost"] = gr_to_pln_gr(pending.calculate_current_cost())
         return {"rental": r}
     return {"rental": user.currentRental}, 200
 
@@ -104,12 +104,12 @@ def getRent(rent_id):
             return BAD_REQUEST
         d = rental.rent.__dict__.copy()
         d["mileage"] = rental.distance
-        d["rentalCost"] = gr_to_pln_gr(rental.calculate_current_cost())
+        d["totalCost"] = gr_to_pln_gr(rental.calculate_current_cost())
         return {"rental": d}, 200
     r = RENTAL_DB.getRental(current_user.get_id(), rentalId=rent_id)
     if r is None:
         return BAD_REQUEST
-    return {"rental": rental}, 200
+    return {"rental": r.__dict__}, 200
 
 
 @app.route("/rent/rent/<rent_id>", methods=["DELETE"])

@@ -226,7 +226,7 @@ class DatabaseInterface:
         """
         pass
 
-    def addLocation(self, location: dict) -> bool:
+    def addLocation(self, location: Location) -> bool:
         pass
 
     def getLocations(self, pageIndex, pageCount, location: tuple[str, str], distance):

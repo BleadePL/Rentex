@@ -326,9 +326,9 @@ class Service:
                  service_end: datetime = None, description=None):
         self._id = service_id
         self.carId = car_id
-        self.userId = user_id
-        self.serviceStart = service_start
-        self.serviceEnd = service_end
+        self.leftBy = user_id
+        self.dateStart = service_start
+        self.dateEnd = service_end
         self.description = description
 
     @classmethod

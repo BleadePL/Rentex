@@ -42,7 +42,7 @@ def getService(service_id: str):
     s = RENTAL_DB.getService(service_id)
     if s is None:
         return {}, 204
-    return s, 200
+    return {"service": s.__dict__}, 200
 
 
 @app.route("/service/<service_id>", methods=["DELETE"])
@@ -60,4 +60,4 @@ def deleteService(service_id: str):
 @app.route("/service/car/<car_id>", methods=["GET"])
 @login_required
 def getServices(car_id: str):
-    return {"services": RENTAL_DB.getServicesHistory(car_id)}, 200
+    return {"services": list(map(lambda serv: serv.__dict__, RENTAL_DB.getServicesHistory(car_id)))}, 200

@@ -43,8 +43,6 @@ def getCars():
         d = car.__dict__
         from datetime import datetime
         for e in d:
-            print(e)
-            print(type(d[e]) is datetime)
             if type(d[e]) is datetime:
                 d[e] = str(d[e])
         return d
