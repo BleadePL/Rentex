@@ -1,4 +1,4 @@
-from backend.db_interface import DatabaseInterface
+from db_interface import DatabaseInterface
 
 DATABASE = "mongodb"
 RENTAL_DB: DatabaseInterface

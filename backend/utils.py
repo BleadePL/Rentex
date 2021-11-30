@@ -2,7 +2,7 @@ import math
 import re
 
 from bson import ObjectId
-from backend.models import CreditCard
+from models import CreditCard
 
 
 def parse_required_fields(json, fields):

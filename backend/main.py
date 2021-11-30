@@ -4,7 +4,7 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import re
 
-from backend.models import User
+from models import User
 
 
 def print_hi(name):

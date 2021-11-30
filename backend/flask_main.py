@@ -5,8 +5,8 @@ import time
 from flask import Flask, Response
 from flask_login import LoginManager
 
-from backend.database_access import RENTAL_DB
-from backend.models import Rental, Car, Reservation, CreditCard
+from database_access import RENTAL_DB
+from models import Rental, Car, Reservation, CreditCard
 from flask_cors import CORS
 import schedule
 

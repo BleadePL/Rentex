@@ -1,7 +1,7 @@
 from flask import request
 from flask_login import login_required
 
-from backend.models import Car, Location
+from models import Car, Location
 from database_access import RENTAL_DB
 from flask_main import app, BAD_REQUEST
 from utils import parse_required_fields, is_latitude_valid, is_longitude_valid

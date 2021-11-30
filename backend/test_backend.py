@@ -3,8 +3,8 @@ from time import sleep
 
 from flask.testing import FlaskClient
 
-from backend.models import Location
-from backend.utils import pln_gr_to_gr
+from models import Location
+from utils import pln_gr_to_gr
 from flask_main import app, RENTAL_DB, MIDDLE_LAT, MIDDLE_LONG
 import json
 

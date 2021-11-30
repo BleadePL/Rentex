@@ -1,7 +1,7 @@
 from flask import request, Response, Request
 from flask_login import login_user, logout_user, login_required, current_user
 
-from backend.models import Location
+from models import Location
 from database_access import RENTAL_DB
 from flask_main import app, login, EMPTY_OK, BAD_REQUEST
 

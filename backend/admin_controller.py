@@ -1,10 +1,7 @@
-import json
 import os
 
 from flask import request, send_file
-from flask_login import login_required
 
-from backend.models import Car, Location
 from database_access import RENTAL_DB
 from flask_main import app, BAD_REQUEST, EMPTY_OK, PHOTOS_TARGET, rental_timer_task
 from utils import parse_required_fields, is_latitude_valid, is_longitude_valid

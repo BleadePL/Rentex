@@ -2,10 +2,10 @@ import bcrypt
 from flask import request
 from flask_login import login_required, current_user
 
-from backend.db_interface import DatabaseInterface
-from backend.flask_main import LoggedInUser
-from backend.models import CreditCard
-from backend.utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
+from db_interface import DatabaseInterface
+from flask_main import LoggedInUser
+from models import CreditCard
+from utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
     is_longitude_valid, execute_card_charge, gr_to_pln_gr, pln_gr_to_gr
 from database_access import RENTAL_DB
 from flask_main import app, EMPTY_OK, BAD_REQUEST

@@ -6,8 +6,8 @@ import time
 from flask import request, Response, Request
 from flask_login import login_user, logout_user, login_required, current_user
 
-from backend.db_interface import DatabaseInterface
-from backend.utils import parse_required_fields
+from db_interface import DatabaseInterface
+from utils import parse_required_fields
 from database_access import RENTAL_DB
 from flask_main import app, login, EMPTY_OK, BAD_REQUEST, LoggedInUser, PHOTOS_TARGET
 
