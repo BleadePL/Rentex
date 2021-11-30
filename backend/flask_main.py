@@ -62,7 +62,7 @@ class PendingRental:
             return self.rent._id == other._id
 
     def update_distance(self, currentLat, currentLong):
-        from backend.utils import calculate_gps_distance
+        from utils import calculate_gps_distance
         d = calculate_gps_distance((float(self.lastLat), float(self.lastLong)), (float(currentLat), float(currentLong)))
         if d > PendingRental.DISTANCE_THRESHOLD:
             self.distance += d
@@ -114,7 +114,7 @@ class RentalReservationTimerTask:
         if r is None:
             return False
         cost = r.calculate_current_cost()
-        from backend.utils import charge_card, gr_to_pln_gr
+        from utils import charge_card, gr_to_pln_gr
         if not charge_card(cost, r.paymentType == "PP", r.card, r.cvv, r.rent.renter):
             return False
         self.active_rentals.remove(r)

@@ -89,7 +89,7 @@ def execute_card_charge(amount, cardNumber, cardExpiration, cvv, holder, address
 
 def charge_card(rentalCostGr: int, chargeBalance: bool = False, card: CreditCard = None, cvv: int = 0,
                 userId: str = None):           
-    from backend.database_access import RENTAL_DB
+    from database_access import RENTAL_DB
     if chargeBalance:
         if userId is None:
             return False
