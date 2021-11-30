@@ -6,6 +6,7 @@ import RegisterForm from './components/RegisterForm';
 import DescriptionTable from './components/DescripionTable';
 import './App.css'
 import ChangePasswordForm from './components/ChangePasswordForm';
+import NearestCarsForm from './components/NearestCars';
 
 const api = new API_Session();
 
@@ -35,10 +36,10 @@ function App() {
   const [user, setUser] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
   const [error, setError] = useState();
   const [data, setData] = useState({name: "", surname: "", login: "", address: "", email: "", pesel: ""});
+  const [car, setCar] = useState({"carId" : ""});
 
   const Login = details =>{
     console.log(details);
-    console.log(registerUser);
     //Praca na bazie
     // api.login(details.login, details.password, setError("success"), setError("invalid_data"), setError("authorization_err"));
 
@@ -80,7 +81,6 @@ function App() {
       });
 
       navigate("/loggedIn");
-  
     }
     else if(registerUser.login == details.login && registerUser.password == details.password && registerUser.login != ""){ 
       console.log("Logged in");
@@ -187,12 +187,17 @@ function App() {
       else setError("error")
   }
 
-  const RentCar = () => {
 
-  }
+  const BrowseCars = details => {
+      //api.reservate(details.carId, setError("success"), setError("failure"), setError("auth_err"));
 
-  const BrowseCars = () => {
-
+      if(details.carId != ""){
+          setCar({
+            carId: details.carId
+          })
+          setError("success")
+      }
+      else setError("failure")
   }
 
   const navigate = useNavigate();
@@ -205,6 +210,7 @@ function App() {
     <Routes>
         <Route path="/" element={
             <div>
+              {() => setError("")}
               <h1>Welcome to Rentex</h1>
               <button name="login" onClick={() => navigate("/login")}>Login</button>
               <button name="register" onClick={() => navigate("/register")}>Register</button>
@@ -228,12 +234,12 @@ function App() {
 
           <Route path="/loggedIn" element = {
               <div>
+                {() => setError("")}
                 <h2>Welcome, <span>{user.name}</span></h2>
-                {console.log(user)}
 
                 <ul>
                   {/* <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li> */}
-                  <li><button name="browse-cars" onClick={BrowseCars}>Browse available cars</button></li>
+                  <li><button name="browse-cars" onClick={() => navigate("/browse-cars")}>Browse available cars</button></li>
                   <li><button name="reserved-car">Reserved car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
                   <li><button name="change-passwd" onClick={() => navigate("/changePasswd")}>Change Password</button></li>
@@ -258,6 +264,12 @@ function App() {
               </div>
           }/>
 
+          <Route path="/browse-cars" element={
+              <div>
+                <NearestCarsForm data={data} Reserve={BrowseCars} error={error} />
+                <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
+              </div>
+          }/>
 
       
     </Routes>
