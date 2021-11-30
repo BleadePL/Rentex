@@ -228,11 +228,12 @@ class MongoDBInterface(DatabaseInterface):
         location = self.rentalDb["Location"].find_one({"_id": ObjectId(locationId)})
         if location is None:
             return None
-        return Car.from_dict(convertObjectIdsToStr(location))
+        return Car.from_dict(convertObjectIdsToStr(location)) #ENDED HERE
 
     def getReservation(self, userId, reservationId):
         reservation = self.rentalDb["User"].find_one({"_id": ObjectId(userId)}, {"reservation": 1})
-        if reservation is None or reservation["reservation"]["_id"] != ObjectId(reservationId):
+        if reservation is None or (
+                "reservation" in reservation and reservation["reservation"]["_id"] != ObjectId(reservationId)):
             return None
         result = Reservation.from_dict(convertObjectIdsToStr(reservation["reservation"]))
         result.userId = userId
@@ -242,7 +243,7 @@ class MongoDBInterface(DatabaseInterface):
         reservation_ = self.rentalDb["User"].find_one({"_id": ObjectId(reservation.userId)}, {"reservation": 1})
         if reservation_ is None or reservation_["reservation"]["_id"] != ObjectId(reservation._id):
             return False
-        a = self.rentalDb["User"].find_and_modify({"_id": ObjectId(reservation_["_id"])},
+        a = self.rentalDb["User"].find_and_modify({"_id": ObjectId(reservation.userId)},
                                                   {'$unset': {"reservation": ""}})
         b = self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation_["reservation"]["carId"])},
                                                  {'$set': {"status": "ACTIVE"}})
@@ -255,7 +256,8 @@ class MongoDBInterface(DatabaseInterface):
         except:
             return None
         user = self.rentalDb["User"].find_one({"_id": ObjectId(reservation.userId)})
-        if user["status"] != "ACTIVE" or user["currentRental"] != "" or (
+        if ("status" in user and user["status"] != "ACTIVE") or (
+                "currentRental" in user and user["currentRental"] != "") or (
                 "reservation" in user and user["reservation"] != ""):
             return None
         id = ObjectId()
@@ -266,7 +268,8 @@ class MongoDBInterface(DatabaseInterface):
                                                   "reservationsEnd": reservation.reservationEnd,
                                                   "carId": ObjectId(reservation.carId)
                                               }}})
-        self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)}, {"$set": {"status": "RESRVED"}})
+        self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)},
+                {"$set": {"status": "RESRVED"}})
         return convertObjectIdsToStr(id)
 
     def startRental(self, userId, carId):
@@ -306,10 +309,13 @@ class MongoDBInterface(DatabaseInterface):
         user = self.getUser(userId)
         if user is None:
             return None
-        if user.currentRental["_id"] == rentalId:
-            rental = Rental.from_dict(convertObjectIdsToStr(user.currentRental))
-            rental.renter = userId
-            return rental
+        try:
+            if user.currentRental["_id"] == rentalId:
+                rental = Rental.from_dict(convertObjectIdsToStr(user.currentRental))
+                rental.renter = userId
+                return rental
+        except:
+            return None
         rental = self.rentalDb["RentalArchive"].find_one({"$and": [
             {"_id": ObjectId(rentalId)},
             {"renter": ObjectId(user._id)}]})
@@ -325,7 +331,10 @@ class MongoDBInterface(DatabaseInterface):
         rental = self.getRental(rent.renter, rent._id)
         if user is None or car is None or rental is None:
             return False
-        if user.currentRental == "" or user.currentRental["carId"] != rental.carId:
+        try:
+            if user.currentRental["carId"] != rental.carId:
+                return False
+        except:
             return False
         # update everything in the rental
         rental.rentalEnd = datetime.utcnow()
@@ -359,13 +368,14 @@ class MongoDBInterface(DatabaseInterface):
         return cars[int(pageIndex): int(pageIndex) + int(pageCount)]
 
     def deleteCar(self, carId):
-        result = self.rentalDb["Car"].delete_one({ObjectId(carId)})
-        return result.deleted_count != 0
+        result = self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)},
+                {"$set": {"status": "DELETED"}})
+        return result is not None
 
     def patchCar(self, carId, changes: dict):
         if any(change in changes for change in ["chargeLevel", "mileage", "currentLocationLat", "currentLocationLong"]):
             changes["lastUpdateTime"] = datetime.utcnow()
-        result = self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)}, {"$set": changes}, upsert=True) # TODO: REMOVE "$set"
+        result = self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)}, {"$set": changes}, upsert=True)
         return result is not None
 
     def getUsers(self, pageIndex, pageCount, filter: str):
@@ -378,8 +388,7 @@ class MongoDBInterface(DatabaseInterface):
             {"address": {"$regex": filter}},
             {"driverLicenceNumber": {"$regex": filter}},
             {"login": {"$regex": filter}},
-            {"email": {"$regex": filter}},
-        ]}).skip(pageIndex).limit(pageCount):
+            {"email": {"$regex": filter}}]}).skip(pageIndex).limit(pageCount):
             users.append(User.from_dict(convertObjectIdsToStr(user)))
         return users
 
@@ -395,9 +404,9 @@ class MongoDBInterface(DatabaseInterface):
     def getUserRentalHistory(self, userId, pageIndex, pageLength):
         rentals = []
         for rental in self.rentalDb["RentalArchive"].find({"renter": ObjectId(userId)}
-                                                          ).skip(pageIndex).limit(pageLength):
+                                                          ).skip(int(pageIndex)).limit(int(pageLength)):
             rentals.append(Rental.from_dict(convertObjectIdsToStr(rental)))
-        return rentals
+        return rentals # convert to using users rental hisstory ? 
 
     def getCard(self, userId, cardId):
         for card in self.getCards(userId):
@@ -421,7 +430,7 @@ class MongoDBInterface(DatabaseInterface):
         locations = self.browseNearestLocations(location, distance)
         if locations is None:
             return None
-        return locations[pageIndex: pageIndex + pageCount]
+        return locations[int(pageIndex): int(pageIndex) + int(pageCount)]
 
     def deleteLocation(self, locationId):
         return self.rentalDb["Location"].find_one_and_update({"_id": ObjectId(locationId)},
@@ -437,8 +446,8 @@ class MongoDBInterface(DatabaseInterface):
                     "location": ObjectId(locationId),
                     "description": description}
         if self.rentalDb["Car"].find_one_and_update({"_id": ObjectId(carId)}, {
-                    {"$push": {"services": service}},
-                    {"$set": {"status": "SERVICE"}}}) is None:
+                    "$push": {"services": service},
+                    "$set": {"status": "SERVICE"}}) is None:
             return None
         service["carId"] = carId
         return Service.from_dict(convertObjectIdsToStr(service))
@@ -447,7 +456,7 @@ class MongoDBInterface(DatabaseInterface):
         service = self.rentalDb["Car"].find_one_and_update(
             {"_id": ObjectId(service.carId), "services._id": ObjectId(service._id)},
             {"$set": {"services.$.dateEnd": datetime.utcnow(), "status": "ACTIVE"}})
-        return service is not None
+        return service is not None # TODO: czy to dziala? (czy nie modyfikuje kazdego servicu)
 
     def getService(self, serviceId):
         car = self.rentalDb["Car"].find_one({"services": {"$elemMatch": {"services._id": ObjectId(serviceId)}}})
@@ -456,7 +465,7 @@ class MongoDBInterface(DatabaseInterface):
         for service in car["services"]:
             if service["_id"] == ObjectId(serviceId):
                 service = Service.from_dict(convertObjectIdsToStr(service))
-                service.carId = car["_id"]
+                service.carId = convertObjectIdsToStr(car["_id"])
                 return service
         return None
 
@@ -469,7 +478,7 @@ class MongoDBInterface(DatabaseInterface):
             return services
         for service in car["services"]:
             service = Service.from_dict(convertObjectIdsToStr(service))
-            service.carId = car["_id"]
+            service.carId = convertObjectIdsToStr(car["_id"])
             services.append(service)
         return services
 
@@ -480,7 +489,7 @@ class MongoDBInterface(DatabaseInterface):
         :returns True if success, false if not
         """
         return self.rentalDb["User"].find_one_and_update({"_id": ObjectId(user_id)},
-                {"$set": {"balance": "new_balance"}}) is not None
+                {"$set": {"balance": new_balance}}) is not None
 
     def getBalance(self, user_id) -> str:
         """
@@ -503,26 +512,23 @@ class MongoDBInterface(DatabaseInterface):
         return user is not None
 
     def addCar(self, car: 'dict'):
-        result = self.rentalDb["Car"].insert_one({
-            "brand": car["brand"],
-            "vin": car["vin"],
-            "regCountryCode": car["regCountryCode"],
-            "regNumber": car["regNumber"],
-            "modelName": car["model"],
-            "seats": car["seats"],
-            "lastUsed": datetime.utcnow(),
-            "chargeLevel": car["charge"],
-            "mileage": car["mileage"],
-            "currentLocationLat": car["locationLat"],
-            "currentLocationLong": car["locationLong"],
-            "lastUpdateTime": datetime.utcnow(),
-            "status": car["status"],
-            "activationCost": car["activationCost"],
-            "kmCost": car["kmCost"],
-            "timeCost": car["timeCost"],
-            "esimNumber": car["esimNumber"],
-            "esimImei": car["esimImei"],
-            "services": []
+        result = self.rentalDb["Car"].insert_one({car
+            # "brand": car["brand"],
+            # "vin": car["vin"],
+            # "regCountryCode": car["regCountryCode"],
+            # "regNumber": car["regNumber"],
+            # "modelName": car["model"],
+            # "seats": car["seats"],
+            # "chargeLevel": car["charge"],
+            # "mileage": car["mileage"],
+            # "currentLocationLat": car["locationLat"],
+            # "currentLocationLong": car["locationLong"],
+            # "status": car["status"],
+            # "activationCost": car["activationCost"],
+            # "kmCost": car["kmCost"],
+            # "timeCost": car["timeCost"],
+            # "esimNumber": car["esimNumber"],
+            # "esimImei": car["esimImei"]
         })
         return convertObjectIdsToStr(result.inserted_id)
 
