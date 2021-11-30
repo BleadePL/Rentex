@@ -96,9 +96,10 @@ class MongoDBInterface(DatabaseInterface):
             {"_id": ObjectId(userId)},
             {"status": 1}
         )
-        if userStatus is None:
+        try: 
+            return userStatus["status"]
+        except:
             return None
-        return userStatus["status"]
 
     def getActivationToken(self, userId: str):
         """
@@ -110,9 +111,10 @@ class MongoDBInterface(DatabaseInterface):
             {"_id": ObjectId(userId)},
             {"activationCode": 1}
         )
-        if activationToken is None:
+        try: 
+            return activationToken["activationCode"]
+        except:
             return None
-        return activationToken["activationCode"]
 
     def setAccountStatus(self, userId: str, status: str):
         """
@@ -144,17 +146,13 @@ class MongoDBInterface(DatabaseInterface):
 
         """
         result = self.rentalDb["User"].update_one({"_id": ObjectId(userId)}, {'$set': {"activationCode": token}})
-        if result.modified_count == 0:
-            return False
-        return True
+        return result.modified_count != 0
 
     def changePassword(self, userId, newPwd):
         result = self.rentalDb["User"].update_one(
             {"_id": ObjectId(userId)},
             {'$set': {"password": bcrypt.hashpw(newPwd.encode('utf8'), salt)}})
-        if result.modified_count == 0:
-            return False
-        return True
+        return result.modified_count != 0
 
     def updateLocation(self, carId, location: tuple[str, str]):
         result = self.rentalDb["Car"].update_one(
@@ -228,7 +226,7 @@ class MongoDBInterface(DatabaseInterface):
         location = self.rentalDb["Location"].find_one({"_id": ObjectId(locationId)})
         if location is None:
             return None
-        return Car.from_dict(convertObjectIdsToStr(location)) #ENDED HERE
+        return Car.from_dict(convertObjectIdsToStr(location))
 
     def getReservation(self, userId, reservationId):
         reservation = self.rentalDb["User"].find_one({"_id": ObjectId(userId)}, {"reservation": 1})
