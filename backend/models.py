@@ -63,7 +63,7 @@ class Car:
                  km_cost: str = None, time_cost: str = None, location_lat: str = None, location_long: str = None,
                  status: str = None, esimImei: str = None, esimNumber: str = None, mileage: int = 0,
                  vin: str = None, currentReservation: Reservation = None, reg_country_code=None,
-                 last_used=None, last_updateTime=None, services_ids: list[str] = None):  # noqa: E501
+                 last_used=None, last_updateTime=None, services_ids=None):  # noqa: E501
         """Car - a model defined in Swagger
 
         :param car_id: The car_id of this Car.  # noqa: E501
@@ -209,8 +209,8 @@ class User:
                  account_type: str = None, status: str = None, balance: str = None, pesel: str = None,
                  driver_licence_number: str = None, driver_licence_expiration_date: str = None,
                  last_rental: int = None, reservation: int = None, role: str = None,
-                 current_rental: Rental = None, cards: list = None, activationCode=None,
-                 rental_history_ids: list[str] = None):  # noqa: E501
+                 current_rental: Rental = None, cards=None, activationCode=None,
+                 rental_history_ids=None):  # noqa: E501
         """User - a model defined in Swagger
 
         :param login: The login of this User.  # noqa: E501

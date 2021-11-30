@@ -156,7 +156,7 @@ class MongoDBInterface(DatabaseInterface):
             {'$set': {"password": bcrypt.hashpw(newPwd.encode('utf8'), salt)}})
         return result.modified_count != 0
 
-    def updateLocation(self, carId, location: tuple[str, str]):
+    def updateLocation(self, carId, location):
         result = self.rentalDb["Car"].update_one(
             {"_id": ObjectId(carId)},
             {'$set': {"currentLocationLat": location[0], "currentLocationLong": location[1]}})
@@ -198,7 +198,7 @@ class MongoDBInterface(DatabaseInterface):
         }}})
         return result.modified_count != 0
 
-    def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
+    def browseNearestCars(self, location, distance):
         cars = []
         for car in self.rentalDb["Car"].find({"status": {"$nin": ["DELETED"]}}):
             if calculate_gps_distance((float(location[0]), float(location[1])),
@@ -208,8 +208,8 @@ class MongoDBInterface(DatabaseInterface):
         return cars
 
     def browseNearestLocations(
-            self, location: tuple[str, str], distance
-    ) -> list["Location"]:
+            self, location, distance
+    ):
         locations = []
         for location_ in self.rentalDb["Location"].find({"status": {"$nin": ["DELETED"]}}):
             if calculate_gps_distance((float(location[0]), float(location[1])),
@@ -363,7 +363,7 @@ class MongoDBInterface(DatabaseInterface):
         })
         return True
 
-    def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):
+    def getCars(self, pageIndex, pageCount, location, distance):
         cars = self.browseNearestCars(location, distance)
         if cars is None:
             return None
@@ -428,7 +428,7 @@ class MongoDBInterface(DatabaseInterface):
         })
         return convertObjectIdsToStr(result.inserted_id)
 
-    def getLocations(self, pageIndex, pageCount, location: tuple[str, str], distance):
+    def getLocations(self, pageIndex, pageCount, location, distance):
         locations = self.browseNearestLocations(location, distance)
         if locations is None:
             return None

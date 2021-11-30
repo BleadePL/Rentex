@@ -86,7 +86,7 @@ class DatabaseInterface:
     def changePassword(self, userId, newPwd):
         pass
 
-    def updateLocation(self, carId, location: tuple[str, str]) -> bool:
+    def updateLocation(self, carId, location) -> bool:
         """
         :param carId:
         :param location: Tuple in form Latitude, Longitude
@@ -110,7 +110,7 @@ class DatabaseInterface:
     def deleteCard(self, userId, cardId):
         pass
 
-    def browseNearestCars(self, location: tuple[str, str], distance) -> list["Car"]:
+    def browseNearestCars(self, location, distance):
         """
 
         :param location: tuple, first location is Longitude, second is Latitude
@@ -120,8 +120,8 @@ class DatabaseInterface:
         pass
 
     def browseNearestLocations(
-            self, location: tuple[str, str], distance
-    ) -> list["Location"]:
+            self, location, distance
+    ):
         """
 
         :param location: tuple, first one is lat, second one is long
@@ -196,7 +196,7 @@ class DatabaseInterface:
         """
         pass
 
-    def getCars(self, pageIndex, pageCount, location: tuple[str, str], distance):
+    def getCars(self, pageIndex, pageCount, location, distance):
         pass
 
     def addCar(self, carDict: 'dict'):
@@ -217,7 +217,7 @@ class DatabaseInterface:
     def patchUser(self, userId, changes: dict):
         pass
 
-    def getUserRentalHistory(self, userId, pageIndex, pageLength) -> list[Rental]:
+    def getUserRentalHistory(self, userId, pageIndex, pageLength):
         """
         :param userId: id of user
         :param pageIndex: a page number
@@ -229,7 +229,7 @@ class DatabaseInterface:
     def addLocation(self, location: Location) -> bool:
         pass
 
-    def getLocations(self, pageIndex, pageCount, location: tuple[str, str], distance):
+    def getLocations(self, pageIndex, pageCount, location, distance):
         pass
 
     def deleteLocation(self, locationId):
@@ -263,7 +263,7 @@ class DatabaseInterface:
         """
         pass
 
-    def getServicesHistory(self, carId) -> list[Service]:
+    def getServicesHistory(self, carId):
         """
 
         :param carId:

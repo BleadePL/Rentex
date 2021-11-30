@@ -92,7 +92,7 @@ class RentalReservationTimerTask:
             if time.time() - e.reservationStart > MAX_RESERVATION_TIME or e.reservationEnd is not None:
                 self.endReservation(e)
 
-    def rent(self, car: Car, user_id, payment_method, cvv: int = None, card: CreditCard = None) -> [None, str]:
+    def rent(self, car: Car, user_id, payment_method, cvv: int = None, card: CreditCard = None) -> str:
         r = Rental(car_id=car._id, rental_start=int(time.time()), ended=False, client_id=user_id, mileage=0,
                    rental_cost="")
         p = PendingRental(rent=r, kmCost=car.kmCost, timeCost=car.timeCost, activationCost=car.activationCost,
@@ -166,8 +166,6 @@ class RentalReservationTimerTask:
 
 app: Flask
 login: LoginManager
-BAD_REQUEST: tuple
-EMPTY_OK: tuple
 rental_timer_task: RentalReservationTimerTask
 MAX_RESERVATION_TIME = 300
 MINIMAL_BALANCE = 10

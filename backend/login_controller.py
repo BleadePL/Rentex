@@ -13,8 +13,6 @@ from flask_main import app, login, EMPTY_OK, BAD_REQUEST, LoggedInUser, PHOTOS_T
 
 RENTAL_DB: DatabaseInterface
 
-logged_in_users: list[LoggedInUser]
-
 
 @login.unauthorized_handler
 def unauthorised():
