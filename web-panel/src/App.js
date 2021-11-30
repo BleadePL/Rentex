@@ -5,16 +5,32 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import DescriptionTable from './components/DescripionTable';
 import './App.css'
+import ChangePasswordForm from './components/ChangePasswordForm';
 
 const api = new API_Session();
 
+let registerUser = {
+  name: "", 
+  surname: "", 
+  login: "", 
+  password: "", 
+  address: "", 
+  email: "", 
+  pesel: ""
+}
 
 function App() {
   //Testing data
   const adminUser = {
+    name: "Daniel",
+    surname: "Wątroba",
     login: "admin",
-    password: "admin123"
+    password: "admin123",
+    address: "Kamienna 27/5",
+    email : "watrobowa@wp.pl",
+    pesel : "0012312324"
   }
+
 
   const [user, setUser] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
   const [error, setError] = useState();
@@ -22,14 +38,14 @@ function App() {
 
   const Login = details =>{
     console.log(details);
+    console.log(registerUser);
     //Praca na bazie
-    // api.login(details.email, details.password, setError("success"), setError("invalid_data"), setError("authorization_err"));
+    // api.login(details.login, details.password, setError("success"), setError("invalid_data"), setError("authorization_err"));
 
     // if(error == "success"){
     //   console.log("Logged in");
     //   setUser({
-    //     name: details.name,
-    //     email : details.email,
+    //     login: details.login,
     //     password : details.password
     //   });
     // }else {
@@ -45,29 +61,54 @@ function App() {
         // email : details.email,
         // password : details.password
 
+        name: adminUser.name,
+        surname: adminUser.surname,
         login: details.login,
-        name: "Daniel",
-        surname: "Markowski",
-        gender: "M",
         password: details.password,
-        address: "20;Sienkiewicza;60951;Tarnobrzeg;Polska",
-        email: details.email,
-        pesel: "60060535351"
+        address: adminUser.address,
+        email: adminUser.email,
+        pesel: adminUser.pesel
       });
 
       setData({
+        name: adminUser.name,
+        surname: adminUser.surname,
         login: details.login,
-        name: details.name,
-        surname: details.surname,
-        address: details.address,
-        email: details.email,
-        pesel: details.pesel
+        address: adminUser.address,
+        email: adminUser.email,
+        pesel: adminUser.pesel
       });
 
       navigate("/loggedIn");
   
     }
-    else if(user.login == details.login) navigate("/loggedIn");
+    else if(registerUser.login == details.login && registerUser.password == details.password && registerUser.login != ""){ 
+      console.log("Logged in");
+      setUser({
+        // name: details.name,
+        // email : details.email,
+        // password : details.password
+
+        name: registerUser.name,
+        surname: registerUser.surname,
+        login: details.login,
+        password: details.password,
+        address: registerUser.address,
+        email: registerUser.email,
+        pesel: registerUser.pesel
+      });
+
+      setData({
+        name: registerUser.name,
+        surname: registerUser.surname,
+        login: details.login,
+        address: registerUser.address,
+        email: registerUser.email,
+        pesel: registerUser.pesel
+      });
+      
+      navigate("/loggedIn");
+    }
     else setError("invalid_data");
   }
 
@@ -103,7 +144,6 @@ function App() {
         login: details.login,
         name: details.name,
         surname: details.surname,
-        gender: details.gender,
         password: details.password,
         address: details.address,
         email: details.email,
@@ -117,12 +157,35 @@ function App() {
         email: details.email,
         pesel: details.pesel
       });
+      
+      registerUser.login = details.login
+      registerUser.name = details.name
+      registerUser.surname = details.surname;
+      registerUser.password = details.password;
+      registerUser.address = details.address;
+      registerUser.email = details.email;
+      registerUser.pesel = details.pesel;
+
+      console.log(registerUser)
+
       navigate("/loggedIn");
       console.log(details);
     }
   }
 
+  const ChangePassword = details => {
+      if(registerUser.password == details.oldPasswd){
+        registerUser.password = details.newPasswd;
 
+        setUser({
+          ...user,
+          password: details.newPasswd
+        });
+
+        setError("success")
+      }
+      else setError("error")
+  }
 
   const RentCar = () => {
 
@@ -166,9 +229,10 @@ function App() {
           <Route path="/loggedIn" element = {
               <div>
                 <h2>Welcome, <span>{user.name}</span></h2>
+                {console.log(user)}
 
                 <ul>
-                  <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li>
+                  {/* <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li> */}
                   <li><button name="browse-cars" onClick={BrowseCars}>Browse available cars</button></li>
                   <li><button name="reserved-car">Reserved car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
@@ -181,6 +245,7 @@ function App() {
           <Route path="/changePasswd" element={
               <div>
                   <div>
+                    <ChangePasswordForm Password={ChangePassword} error={error}/>
                     <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
                   </div>
               </div>
