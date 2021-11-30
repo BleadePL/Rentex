@@ -51,7 +51,6 @@ def loginToSystem():
         user = LoggedInUser(user_id, token)
         login_user(user)
         logged_in_users.append(user)
-        print("E")
         return {'token': token}, 200
     else:
         return {}, 401
@@ -134,7 +133,6 @@ def uploadPhoto():
     return EMPTY_OK
 
 
-print("Login_controller" + __name__)
 
 if __name__ == "login_controller":
     logged_in_users = [LoggedInUser("test123", "testTokenAdmin")]

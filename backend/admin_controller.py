@@ -202,6 +202,11 @@ def rentalHistory(car_id):
 
 @app.route("/admin/user/<user_id>", methods=["GET"])
 def getAdminUserDetails(user_id):
+    u = RENTAL_DB.getUser(user_id)
+    if u is None:
+        return BAD_REQUEST
+    u.password = "<SHADED>"
+    return {"user": u.__dict__}, 200
     pass
 
 

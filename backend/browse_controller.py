@@ -10,7 +10,6 @@ from utils import parse_required_fields, is_latitude_valid, is_longitude_valid
 @app.route("/browse/nearestcars", methods=["GET"])
 @login_required
 def getNearestCars():
-    print(request.args["locationLat"])
     fields = parse_required_fields(request.args, ["locationLat", "locationLong"])
     if fields is None:
         return BAD_REQUEST

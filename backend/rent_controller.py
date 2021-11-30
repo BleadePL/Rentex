@@ -30,10 +30,8 @@ def getReservationOfUser():
     user = RENTAL_DB.getUser(current_user.get_id())
     if user is None:
         return BAD_REQUEST
-    print(user.reservation)
     if user.reservation is None:
         return {}, 204
-    print(user.reservation)
     return {"reservation": user.reservation}, 200
 
 @app.route("/rent/reservate", methods=["POST"])

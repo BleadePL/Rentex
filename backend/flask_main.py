@@ -184,16 +184,19 @@ def runTests():
     from test_backend import Tests, TEST_FUNCTIONS
     with app.test_client() as client:
         t = Tests(client)
-        print(TEST_FUNCTIONS)
+
 
         # attrs = (getattr(t, name) for name in dir(t))
         # import inspect
         # methods = filter(inspect.ismethod, attrs)
         for method in TEST_FUNCTIONS:
             try:
-                print("TESTING: " + method.__name__)
+                print("-----TESTING: " + method.__name__ + "-----")
+                print()
                 if method.__name__ != "__init__":
                     method(t)
+                print("-----TEST COMPLETE-----")
+                print()
             except AssertionError as ex:
                 assert False
                 # Can't handle methods with required arguments.
@@ -229,5 +232,9 @@ if __name__ == "flask_main":
     t.setDaemon(True)
     t.start()
     if TESTS:
+        print("Welcome to Testing system. Hold your fingers now!")
+        print()
         runTests()
+        print()
+        print("Test complete! Everything is okey! Thanks for testing with Z-Grate solutions!")
         exit(0)

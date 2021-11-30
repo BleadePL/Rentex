@@ -103,12 +103,11 @@ def addCard():
 @login_required
 def getCard(card_id: str):
     card = RENTAL_DB.getCard(current_user.get_id(), card_id)
-    print(card)
     if card is None:
         return BAD_REQUEST
 
     return {
-        "lastdigits": str(card.cardNumber)[-4:],
+        "lastDigits": str(card.cardNumber)[-4:],
         "expiration": card.expirationDate,
         "holderName": card.cardHolderName
     }
@@ -117,7 +116,6 @@ def getCard(card_id: str):
 @app.route("/user/card/<card_id>/charge", methods=["POST"])
 @login_required
 def charge(card_id: str):
-    print(request.json)
     if request.json is None or "amount" not in request.json or "cvv" not in request.json:
         return BAD_REQUEST
     card = RENTAL_DB.getCard(current_user.get_id(), card_id)

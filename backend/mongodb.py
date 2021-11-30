@@ -475,7 +475,7 @@ class MongoDBInterface(DatabaseInterface):
                     return service
             return None
         except Exception as ex:
-            traceback.print_tb(ex.__traceback__)
+            print("Exception occured " + str(ex))
             return None
 
     def getServicesHistory(self, carId):
