@@ -151,7 +151,7 @@ def populateDataBase(db:MongoClient, howManyCars, howManyUsers, howManyCreditCar
     print(len(resLocations.inserted_ids))
     resArchive = db["RentalArchive"].insert_many(rentals[0])
     print(len(resArchive.inserted_ids))
-    return (resCars[1], resUsers[1], resLocations[1], resArchive[1])
+    return (resCars.inserted_ids,resUsers.inserted_ids, resLocations.inserted_ids, resArchive.inserted_ids)
     # for i,car in enumerate(cars[0]):
     #     res = db["Car"].insert_one(car)
     #     print(f"car: {i} of {howManyCars}, id: {res.inserted_id}")
