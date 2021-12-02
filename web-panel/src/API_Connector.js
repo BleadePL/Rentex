@@ -657,23 +657,28 @@ class API_Session{
      * @returns {Promise<void>}
      */
     async getNearestCars(locationLat, locationLong, distance, success, failure, auth_failed){
-        await fetch(API_Session.GLOBAL_IP_ENDPOINT+Endpoints.BROWSE_NEARESTCARS + `?locationLat=${locationLat}&locationLong=${locationLong}&distance=${distance}`,
-    {
-            method: "GET",
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Session-Token': this.SESSION_TOKEN
+        console.log("Im here")
+        await fetch(
+            API_Session.GLOBAL_IP_ENDPOINT+Endpoints.BROWSE_NEARESTCARS + `?locationLat=${locationLat}&locationLong=${locationLong}`,
+            {
+                method: "GET",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Session-Token': this.SESSION_TOKEN
+                }
             }
-        })
+        )
         .then(response => {
             if(response.ok){
+                console.log("XD")
                 return response.json()
             }
             else if(response.status === 401){
                 return "AUTH"
             }
             else{
+                console.log("BAD")
                 return "BR"
             }
 

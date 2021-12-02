@@ -15,7 +15,8 @@ function App() {
 
   const [user, setUser] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
   const [error, setError] = useState();
-  const [car, setCar] = useState({"carId" : ""});
+  const [car, setCar] = useState();
+  const [reserved, setReservation] = useState()
 
   
 
@@ -24,6 +25,7 @@ function App() {
     //Praca na bazie
     // api.login(details.login, details.password, LoadUser , () => setError("invalid"), setError)
     api.getUserDetails(setUser, () => console.log())
+    api.getNearestCars('51.119475', '17.050562', 100000, setCar, console.log, console.log)
     navigate("/loggedIn")
   }
   
@@ -37,19 +39,6 @@ function App() {
 
   const Logout = () => {
 
-    // Praca na bazie
-    
-    // api.logout(setError("success"), setError("failure"));
-
-    // if(error == "success")
-    // {
-    //   setUser({name: "", email: ""});
-    //   setError("");
-    // }
-    // else{
-    //   console.log(error);
-    // }
-
     setError("");
 
     navigate("/");
@@ -60,21 +49,10 @@ function App() {
 
   }
 
-  const ChangePassword = details => {
 
-  }
-
-
-  const BrowseCars = details => {
-      //api.reservate(details.carId, setError("success"), setError("failure"), setError("auth_err"));
-
-      if(details.carId != ""){
-          setCar({
-            carId: details.carId
-          })
-          setError("success")
-      }
-      else setError("failure")
+  const BrowseCars = (details, resId) => {
+      console.log(details)
+      console.log(resId)
   }
 
   const navigate = useNavigate();
@@ -111,28 +89,16 @@ function App() {
           <Route path="/loggedIn" element = {
               <div>
                 <h2>Welcome, <span>{user.name}</span></h2>
-                {console.log("asdasd"),
-                console.log(user)}
-
                 <ul>
                   {/* <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li> */}
                   <li><button name="browse-cars" onClick={() => navigate("/browse-cars")}>Browse available cars</button></li>
                   <li><button name="reserved-car">Reserved car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
-                  <li><button name="change-passwd" onClick={() => navigate("/changePasswd")}>Change Password</button></li>
                   <li><button name="logout" onClick={Logout}>Logout</button></li>
                 </ul>
               </div>
           }/>
 
-          <Route path="/changePasswd" element={
-              <div>
-                  <div>
-                    <ChangePasswordForm Password={ChangePassword} error={error}/>
-                    <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
-                  </div>
-              </div>
-          }/>
           
           <Route path="/userDescr" element={
               <div>
@@ -143,7 +109,8 @@ function App() {
 
           <Route path="/browse-cars" element={
               <div>
-                <NearestCarsForm data={user} Reserve={BrowseCars} error={error} api={api}/>
+                {/* {() => api.getNearestCars("51.1", "16.2", 100000, setCar, () => console.log(), () => console.log())} */}
+                <NearestCarsForm data={user} Reserve={BrowseCars} cars={car} api={api}/>
                 <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
               </div>
           }/>
