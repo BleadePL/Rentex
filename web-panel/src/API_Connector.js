@@ -36,7 +36,7 @@ class Endpoints{
 }
 
 class API_Session{
-    static GLOBAL_IP_ENDPOINT = "http://localhost:5000/";
+    static GLOBAL_IP_ENDPOINT = "http://vps.zgrate.ovh:5000/";
     static ERROR_HANDLER = (error) => {
         console.log(error)
     }

@@ -10,9 +10,9 @@ export default function DescriptionTable({data, children}){
                     <td>Name</td>
                     <td>Surname</td>
                     <td>Login</td>
-                    <td>Address</td>
                     <td>Email</td>
-                    <td>Pesel</td>
+                    <td>Balance</td>
+                    <td>Account Status</td>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,13 +27,13 @@ export default function DescriptionTable({data, children}){
                             {data.login}
                         </td>
                         <td>
-                            {data.address}
-                        </td>
-                        <td>
                             {data.email}
                         </td>
                         <td>
-                            {data.pesel}
+                            {data.balance}
+                        </td>
+                        <td>
+                            {data.status}
                         </td>
                     </tr>
                 </tbody>

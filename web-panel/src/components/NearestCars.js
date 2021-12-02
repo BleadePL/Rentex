@@ -1,7 +1,14 @@
 import React, {useState} from "react";
 import '../App.css'
 
-export default function NearestCarsForm({data, Reserve, error}){
+
+var carsD
+
+const LoadCars = (data) => {
+    carsD = data
+}
+
+export default function NearestCarsForm({data, Reserve, error, api}){
     var cars = [{"carId": 48530713, "brand": "Toyota","regNumber": "DW112233","model": "Yaris 1.0","seats": 5,"charge": 100, "activationCost": "10.30",
                 "timeCost": "0.30","locationLat": "51.235123","locationLong": "16.50312","status": "ACTIVE"},
 
@@ -13,9 +20,18 @@ export default function NearestCarsForm({data, Reserve, error}){
                 ];
 
 
+    
+    api.getNearestCars("51.1", "17.1", LoadCars, 1000, () => console.log(), () => console.log());
+
+    console.log(carsD)
+
+    
     const [state, setState] = React.useState(cars);
 
     const [details, setDetails] = useState({carId: ""});
+
+    
+
 
     const submitHandler = e =>{
         e.preventDefault();

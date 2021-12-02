@@ -1,15 +1,20 @@
 import React, {useState} from "react";
 import '../App.css'
 
-function LoginForm({Login, error}){
+function LoginForm({Login, api}){
     const [details, setDetails] = useState({login: "", password: ""});
+    const [error, setError] = useState()
 
     const submitHandler = e =>{
         e.preventDefault();
 
-        Login(details)
+        api.login(details.login, details.password, sendData, () => setError("invalid_argument"), () => setError("authorization_failure"));
     }
     
+    const sendData = () => {
+        Login(details)
+    }
+
     return (
         <form onSubmit={submitHandler}>
             <div className="form-inner">
