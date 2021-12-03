@@ -3,19 +3,24 @@ import '../App.css'
 
 
 
-function ReservedCar({Api, reservation, children}){
+function ReservedCar({Api, reservation, appManagment, children}){
     const [details, setDetails] = useState({resId: ""})
     const [error, setError] = useState()
 
     const submitHandler = e =>{
         e.preventDefault();
         console.log(reservation)
-        console.log(reservation.carId)
-        Api.endReservation(details.resId, () => console.log(),
+        console.log(reservation.reservation.carId)
+        Api.endReservation(details.resId, deleteReservation,
         () => console.log(), () => console.log())
     }
 
-    if(reservation == undefined) return(<div></div>)
+    const deleteReservation = () =>{
+        appManagment()
+        setError("Success")
+    }
+
+    if(reservation == undefined) return(<div>Brak rezerwacji</div>)
 
     return(
             <div>
@@ -30,15 +35,15 @@ function ReservedCar({Api, reservation, children}){
                     </thead>
                     <tbody>
                         <tr>
-                            {/* <td>{reservation._id}</td> */}
+                             <td>{reservation.reservation._id}</td> 
                         
                         
-                            <td>{reservation.carId}</td>
+                            <td>{reservation.reservation.carId}</td>
                         
                         
-                            <td>{reservation.reservationStart}</td>
+                            <td>{reservation.reservation.reservationStart}</td>
                         
-                            <td>{reservation.reservationsEnd}</td>
+                            <td>{reservation.reservation.reservationsEnd}</td>
 
                         </tr>
                     </tbody>

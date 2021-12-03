@@ -17,7 +17,7 @@ function App() {
   const [user, setUser] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
   const [error, setError] = useState();
   const [car, setCar] = useState();
-  const [reserved, setReservation] = useState()
+  const [reserved, setReservation] = useState();
 
   
 
@@ -51,10 +51,18 @@ function App() {
 
   }
 
+  const reservManagment = () =>{
+      setReservation()
+  }
+
+  const reservationMade = (details) => {
+    setReservation(details)
+  }
 
   const BrowseCars = (details, resId) => {
       console.log(details)
       console.log(resId)
+      api.getUserReservation(setReservation, () => console.log(), console.log());
   }
 
   const navigate = useNavigate();
@@ -118,7 +126,7 @@ function App() {
 
           <Route path="/browse-reservation" element={
               <div>
-                <ReservedCar Api={api} reservation={reserved}/>
+                <ReservedCar Api={api} reservation={reserved} appManagment={reservManagment}/>
                 <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
               </div>
           }/>

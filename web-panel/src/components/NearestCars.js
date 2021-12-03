@@ -4,18 +4,7 @@ import '../App.css'
 
 
 
-export default function NearestCarsForm({data, Reserve, cars, api, children}){
-    //     var carsy = [{"carId": 48530713, "brand": "Toyota","regNumber": "DW112233","model": "Yaris 1.0","seats": 5,"charge": 100, "activationCost": "10.30",
-    //     "timeCost": "0.30","locationLat": "51.235123","locationLong": "16.50312","status": "ACTIVE"},
-    
-    //     {"carId": 321530713, "brand": "ESSA","regNumber": "DW112233","model": "Yaris 1123.0","seats": 5,"charge": 100, "activationCost": "10.30",
-    //     "timeCost": "0.30","locationLat": "51.235123","locationLong": "16.50312","status": "ACTIVE"},
-    
-    //     {"carId": 12412330713, "brand": "Toyota","regNumber": "DW112233","model": "Yaris 1.0","seats": 5,"charge": 100, "activationCost": "10.30",
-    //     "timeCost": "0.30","locationLat": "51.235123","locationLong": "16.50312","status": "ACTIVE"}
-    // ];
-    
-    
+export default function NearestCarsForm({data, Reserve, cars, api, children}){    
     console.log(cars)
     
     const [state, setState] = React.useState(cars);
