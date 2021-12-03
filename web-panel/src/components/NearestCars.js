@@ -31,7 +31,6 @@ export default function NearestCarsForm({data, Reserve, cars, api, children}){
     
     const submitHandler = e =>{
         e.preventDefault();
-
         api.reservate(details.carId, ReserveCar, () => setError("invalid_argument"), () => setError("Has reservation"))
     }
 

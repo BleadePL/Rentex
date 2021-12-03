@@ -7,6 +7,7 @@ import DescriptionTable from './components/DescripionTable';
 import './App.css'
 import ChangePasswordForm from './components/ChangePasswordForm';
 import NearestCarsForm from './components/NearestCars';
+import ReservedCar from './components/ReservedCar';
 
 const api = new API_Session();
 
@@ -26,6 +27,7 @@ function App() {
     // api.login(details.login, details.password, LoadUser , () => setError("invalid"), setError)
     api.getUserDetails(setUser, () => console.log())
     api.getNearestCars('51.119475', '17.050562', 100000, setCar, console.log, console.log)
+    api.getUserReservation(setReservation, () => console.log, () => console.log())
     navigate("/loggedIn")
   }
   
@@ -92,7 +94,7 @@ function App() {
                 <ul>
                   {/* <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li> */}
                   <li><button name="browse-cars" onClick={() => navigate("/browse-cars")}>Browse available cars</button></li>
-                  <li><button name="reserved-car">Reserved car</button></li>
+                  <li><button name="reserved-car" onClick={() => navigate("/browse-reservation")}>Reserved car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
                   <li><button name="logout" onClick={Logout}>Logout</button></li>
                 </ul>
@@ -109,12 +111,17 @@ function App() {
 
           <Route path="/browse-cars" element={
               <div>
-                {/* {() => api.getNearestCars("51.1", "16.2", 100000, setCar, () => console.log(), () => console.log())} */}
                 <NearestCarsForm data={user} Reserve={BrowseCars} cars={car} api={api}/>
                 <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
               </div>
           }/>
 
+          <Route path="/browse-reservation" element={
+              <div>
+                <ReservedCar Api={api} reservation={reserved}/>
+                <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
+              </div>
+          }/>
       
     </Routes>
       
