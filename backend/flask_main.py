@@ -10,7 +10,7 @@ from models import Rental, Car, Reservation, CreditCard
 from flask_cors import CORS
 import schedule
 
-TESTS = True
+TESTS = False
 
 
 class LoggedInUser:
@@ -100,7 +100,7 @@ class RentalReservationTimerTask:
                           startLat=car.currentLocationLat, paymentType=payment_method, cvv=cvv, card=card,
                           overtime=False)
         if payment_method == "PP":
-            if RENTAL_DB.getBalance(user_id) < MINIMAL_BALANCE:
+            if float(RENTAL_DB.getBalance(user_id)) < MINIMAL_BALANCE:
                 return None
         rentalId = RENTAL_DB.startRental(userId=user_id, carId=car._id)
         if rentalId is not None:
