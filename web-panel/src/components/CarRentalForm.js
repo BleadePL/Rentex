@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import '../App.css'
 
 
-export default function RentCar({Api, reservation, flowData, endRentalData, actRented}){
+export default function RentCar({Api, flowData, endRentalData, actRented}){
 
     //rent(carId, cvv, paymentType, success, failure, auth_failed)
     //endRental(rentalId, success, failure, auth_failed)
@@ -20,7 +20,7 @@ export default function RentCar({Api, reservation, flowData, endRentalData, actR
     const submitHandler = e =>{
         e.preventDefault();
         console.log(rentalDetails)
-        //Api.rent(rentalDetails.carId, rentalDetails.cvv, rentalDetails.paymentType, RentalCar, setError, setError)
+        Api.rent(rentalDetails.carId, rentalDetails.cvv, rentalDetails.paymentType, RentalCar, setError, setError)
     }
 
     const endRental = () =>{
@@ -33,7 +33,7 @@ export default function RentCar({Api, reservation, flowData, endRentalData, actR
         // Api.endRental(actRented)
     }
 
-    if(reservation == undefined) return (<div>No reservation, nothing to rent</div>)
+    // if(reservation == undefined) return (<div>No reservation, nothing to rent</div>)
 
     return(
 

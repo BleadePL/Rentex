@@ -7,6 +7,7 @@ export default function DescriptionTable({data, children}){
             <table>
                 <thead>
                     <tr>
+                    <td>Id</td>
                     <td>Name</td>
                     <td>Surname</td>
                     <td>Login</td>
@@ -17,6 +18,7 @@ export default function DescriptionTable({data, children}){
                 </thead>
                 <tbody>
                     <tr>
+                        <td>{data.id}</td>
                         <td>
                             {data.name}
                         </td>

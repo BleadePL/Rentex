@@ -1,14 +1,16 @@
 import React, {useState} from "react";
 import '../App.css'
 
-function RegisterForm({Register, error}){
+function RegisterForm({api, Register}){
     const [details, setDetails] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
+    const [error, setError] = useState()
+
 
     const submitHandler = e =>{
         e.preventDefault();
-
-        Register(details)
-    }
+        api.register(details.name, details.surname, details.gender, details.login, details.password, details.address, details.email, details.pesel,
+            () => setError("Incorrect Data"), () => setError("Auth err"))
+        }
     
     return (
         <form onSubmit={submitHandler}>
@@ -34,7 +36,10 @@ function RegisterForm({Register, error}){
                     <label htmlFor="password">Password: </label>
                     <input type="password" name="password" id="password" onChange={e => setDetails({...details, password: e.target.value})} value={details.password}/>
                 </div>
-
+                <div className="form-group">
+                    <label htmlFor="password">Gender: </label>
+                    <input type="password" name="password" id="password" onChange={e => setDetails({...details, gender: e.target.value})} value={details.gender}/>
+                </div>
                 <div className="form-group">
                         <label htmlFor="name">Address: </label>
                         <input type="address" name="address" id="address" onChange={e => setDetails({...details, address: e.target.value})} value={details.address}/>
