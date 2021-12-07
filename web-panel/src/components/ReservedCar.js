@@ -2,7 +2,6 @@ import React, {useState} from "react";
 import '../App.css'
 
 
-
 function ReservedCar({Api, reservation, appManagment, children}){
     const [details, setDetails] = useState({resId: ""})
     const [error, setError] = useState()
@@ -12,7 +11,7 @@ function ReservedCar({Api, reservation, appManagment, children}){
         console.log(reservation)
         console.log(reservation.reservation.carId)
         Api.endReservation(details.resId, deleteReservation,
-        () => console.log(), () => console.log())
+        () => setError("Incorrect Data"), () => setError("Auth err"))
     }
 
     const deleteReservation = () =>{

@@ -2,8 +2,6 @@ import React, {useState} from "react";
 import '../App.css'
 
 
-
-
 export default function NearestCarsForm({data, Reserve, cars, api, children}){    
     console.log(cars)
     

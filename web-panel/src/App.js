@@ -8,6 +8,7 @@ import './App.css'
 import ChangePasswordForm from './components/ChangePasswordForm';
 import NearestCarsForm from './components/NearestCars';
 import ReservedCar from './components/ReservedCar';
+import CarRentalForm from './components/CarRentalForm'
 
 const api = new API_Session();
 
@@ -18,6 +19,7 @@ function App() {
   const [error, setError] = useState();
   const [car, setCar] = useState();
   const [reserved, setReservation] = useState();
+  const [rental, setRental] = useState();
 
   
 
@@ -28,21 +30,13 @@ function App() {
     api.getUserDetails(setUser, () => console.log())
     api.getNearestCars('51.119475', '17.050562', 100000, setCar, console.log, console.log)
     api.getUserReservation(setReservation, () => console.log, () => console.log())
+    api.getUserRental(setRental, () => console.log, () => console.log())
     navigate("/loggedIn")
   }
-  
-  
-  // const LoadUser = () => {
-  //   api.getUserDetails(setUser, () => console.log())
-  //   navigate("/loggedIn")
-  // }
-
-
 
   const Logout = () => {
 
     setError("");
-
     navigate("/");
   }
 
@@ -55,8 +49,18 @@ function App() {
       setReservation()
   }
 
-  const reservationMade = (details) => {
-    setReservation(details)
+  // const reservationMade = (details) => {
+  //   setReservation(details)
+  // }
+
+
+  const rentCar = (details) => {
+    api.getUserRental(setRental, setError, setError)
+  }
+
+  const leaveCar = (details) => {
+    // api.endRental(rental.carId, )
+
   }
 
   const BrowseCars = (details, resId) => {
@@ -100,7 +104,7 @@ function App() {
               <div>
                 <h2>Welcome, <span>{user.name}</span></h2>
                 <ul>
-                  {/* <li><button name="rent-car" onClick={RentCar}>Rent a car</button></li> */}
+                  <li><button name="rent-car" onClick={() => navigate("/rent-car")}>Rent a car</button></li>
                   <li><button name="browse-cars" onClick={() => navigate("/browse-cars")}>Browse available cars</button></li>
                   <li><button name="reserved-car" onClick={() => navigate("/browse-reservation")}>Reserved car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>
@@ -126,7 +130,14 @@ function App() {
 
           <Route path="/browse-reservation" element={
               <div>
-                <ReservedCar Api={api} reservation={reserved} appManagment={reservManagment}/>
+                <ReservedCar Api={api} reservation={reserved} appManagment={reservManagment} />
+                <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
+              </div>
+          }/>
+
+          <Route path="/rent-car" element={
+              <div>
+                <CarRentalForm Api={api} reservation={reserved} flowData={rentCar} endRentalData={leaveCar} actRented={rental}/>
                 <button name="index" onClick={() => navigate("/loggedIn")}>Return</button>
               </div>
           }/>
