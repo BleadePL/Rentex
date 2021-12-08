@@ -200,7 +200,7 @@ class MongoDBInterface(DatabaseInterface):
 
     def browseNearestCars(self, location, distance):
         cars = []
-        for car in self.rentalDb["Car"].find({"status": {"$nin": ["DELETED"]}}):
+        for car in self.rentalDb["Car"].find({"status": {"$nin": ['RESERVED','SERVICE', 'INUSE', 'INACTIVE', 'UNKNOWN', 'DELETED']}}):
             if calculate_gps_distance((float(location[0]), float(location[1])),
                                       (float(car["currentLocationLat"]),
                                        float(car["currentLocationLong"]))) <= int(distance):
@@ -269,7 +269,7 @@ class MongoDBInterface(DatabaseInterface):
                                                   "carId": ObjectId(reservation.carId)
                                               }}})
         self.rentalDb["Car"].find_and_modify({"_id": ObjectId(reservation.carId)},
-                {"$set": {"status": "RESRVED"}})
+                {"$set": {"status": "RESERVED"}})
         return convertObjectIdsToStr(id)
 
     def startRental(self, userId, carId):
