@@ -1,5 +1,7 @@
 # coding: utf-8
-from sqlalchemy import BigInteger, CHAR, Column, DECIMAL, ForeignKey, Integer, String, Table, text
+from re import T
+from sqlite3 import Time
+from sqlalchemy import VARCHAR, BigInteger, CHAR, Column, DECIMAL, ForeignKey, Integer, String, Table, create_engine, text, DateTime
 from sqlalchemy.dialects.mysql import TIME
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,13 +23,13 @@ class Car(Base):
     regNumber = Column(String(10), nullable=False)
     modelName = Column(String(50), nullable=False)
     passengerNumber = Column(Integer, nullable=False)
-    lastUsed = Column(TIME(fsp=6), nullable=False)
+    lastUsed = Column(DateTime, nullable=False)
     chargeLevel = Column(Integer, nullable=False)
     mileage = Column(Integer, nullable=False)
     currentLocationLat = Column(DECIMAL(10, 8), nullable=False)
     currentLocationLong = Column(DECIMAL(11, 8), nullable=False)
-    lastUpdateTime = Column(TIME(fsp=6), nullable=False)
-    lastService = Column(TIME(fsp=6), nullable=False)
+    lastUpdateTime = Column(DateTime, nullable=False)
+    lastService = Column(DateTime, nullable=False)
     status = Column(String(3), nullable=False,
                     comment='ACTIVE - aktywny\\nRESERVED - zarezerwowany\\nINACTIVE - wyłączony z użycia\\nSERVICE - Serwisowany\\nINUSE - w uzyciu\\nUNKNOWN - nieznany stan')
     activationCost = Column(String(30), nullable=False)
@@ -35,6 +37,8 @@ class Car(Base):
     timeCost = Column(String(30), nullable=False)
     esimNumber = Column(Integer, nullable=False)
     eSimImei = Column(Integer, nullable=False)
+    rentals = relationship("Rental", back_populates="car")
+    services = relationship("Service", back_populates="car")
 
 
 class Client(Base):
@@ -58,6 +62,26 @@ class Client(Base):
                     comment='ACTIVE - Aktywne konto\\nINACTIVE - nieaktwyne konto\\nDOCUMENTS - Brak dokumentow\\nPENDING - wyslano dokumenty, oczekiwanie na potwierdzenie\\nPAYMENT - Brak srodkow na koncie\\nLOCKED - konto zablokowane\\nDELETED - konto usuniete')
 
     Roles = relationship('Role', secondary='ClientRoles')
+    creditCards = relationship("CreditCard", back_populates="client")
+    rentals = relationship("Rental", back_populates="client")
+    reservations = relationship("Reservation", back_populates="client")
+    services = relationship("Service", back_populates="client")
+
+class Service(Base):
+     __tablename__ = 'Services'
+     serviceId = Column(Integer, primary_key=True, unique=True)
+     dateStart = Column(DateTime, nullable=False)
+     dateEnd = Column(DateTime)
+     description = Column(String(255))
+     
+     locationId = Column(Integer, ForeignKey('Locations.locationId'))
+     carId = Column(Integer, ForeignKey('Cars.carId'))
+     clientId = Column(Integer, ForeignKey('Clients.clientId'))
+
+     location = relationship("Location", back_populates="services")
+     car = relationship("Car", back_populates="services")
+     client = relationship("Client", back_populates="services") 
+
 
 
 class Location(Base):
@@ -71,6 +95,8 @@ class Location(Base):
     leaveReward = Column(String(30), nullable=False)
     locationLat = Column(DECIMAL(10, 8), nullable=False)
     locationLong = Column(DECIMAL(11, 8), nullable=False)
+    
+    services = relationship("Service", back_populates="location") 
 
 
 class Role(Base):
@@ -83,8 +109,8 @@ class Role(Base):
 
 t_ClientRoles = Table(
     'ClientRoles', metadata,
-    Column('clientId', ForeignKey('Clients.clientId'), nullable=False, index=True),
-    Column('roleId', ForeignKey('Roles.roleId'), index=True)
+    Column('clientId', ForeignKey('Clients.clientId'), index=True, primary_key=True),
+    Column('roleId', ForeignKey('Roles.roleId'), index=True, primary_key=True)
 )
 
 
@@ -98,7 +124,7 @@ class CreditCard(Base):
     cardHolderName = Column(String(30))
     cardHolderAddress = Column(String(30))
 
-    Client = relationship('Client')
+    client = relationship('Client', back_populates="creditCards")
 
 
 class Rental(Base):
@@ -107,14 +133,14 @@ class Rental(Base):
     rentalId = Column(BigInteger, primary_key=True, unique=True)
     carId = Column(ForeignKey('Cars.carId'), nullable=False, index=True)
     clientId = Column(ForeignKey('Clients.clientId'), index=True)
-    rentalStart = Column(TIME(fsp=6), nullable=False)
-    rentalEnd = Column(TIME(fsp=6))
+    rentalStart = Column(DateTime, nullable=False)
+    rentalEnd = Column(DateTime)
     mileage = Column(Integer, nullable=False)
     cost = Column(String(30))
     ended = Column(Integer, nullable=False)
 
-    Car = relationship('Car')
-    Client = relationship('Client')
+    car = relationship('Car', back_populates="rentals")
+    client = relationship('Client', back_populates="rentals")
 
 
 class Reservation(Base):
@@ -123,9 +149,15 @@ class Reservation(Base):
     reservationId = Column(Integer, primary_key=True, unique=True)
     carId = Column(ForeignKey('Cars.carId'), nullable=False, index=True)
     clientId = Column(ForeignKey('Clients.clientId'), index=True)
-    reservationStart = Column(TIME(fsp=6), nullable=False)
-    reservationEnd = Column(TIME(fsp=6))
+    reservationStart = Column(DateTime, nullable=False)
+    reservationEnd = Column(DateTime)
     reservationCost = Column(Integer, nullable=False)
 
     Car = relationship('Car')
-    Client = relationship('Client')
+    client = relationship('Client', back_populates="reservations")
+
+if __name__ == "__main__":
+    url = f'postgresql://postgres:passwd@127.0.0.1:5432'
+    engine = create_engine(url, echo=True)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
