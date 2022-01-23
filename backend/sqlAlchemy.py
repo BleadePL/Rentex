@@ -1,10 +1,25 @@
+from curses import echo
+from sqlite3 import connect
+from sqlalchemy import *
+import sqlalchemy
+from sqlalchemy.orm import Session
+from backend.database_access import DATABASE
 from backend.db_interface import DatabaseInterface
 
+
+HOSTNAME = "vps.zgrate.ovh"
+PORT = "3306"
+USERNAME = "polrentex"
+PASSWORD = "rentex123"
+DB_NAME = "Rentex"
+
+engine = sqlalchemy.create_engine('mysql://' + USERNAME + ':' + PASSWORD + '@' + HOSTNAME + ':' + PORT + '/' + DB_NAME)
 
 class SQLAlchemyInterface(DatabaseInterface):
     
     def __init__(self):
-        pass
+        super().__init__()
+        session = Session(bind=engine.connect())
 
     def authUser(self, login, password):
         pass
@@ -21,7 +36,8 @@ class SQLAlchemyInterface(DatabaseInterface):
     ):
         pass
 
-    def getAccountStatus(self, userId: str):
+    @DATABASE.db_query
+    def getAccountStatus(self, userId: str, session: Session):
         pass
 
     def getActivationToken(self, userId: str):
