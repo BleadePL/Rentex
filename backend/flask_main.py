@@ -177,6 +177,10 @@ MIDDLE_LAT = "51.107737"
 MIDDLE_LONG = "17.038717"
 MAX_DISTANCE = 10000
 
+from db import Database
+## db
+DATABASE = Database("url") ## TODO: paste the connection string here
+## /db
 
 def runTests():
     from test_backend import Tests, TEST_FUNCTIONS
