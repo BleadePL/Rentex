@@ -2,10 +2,10 @@ from curses import echo
 from sqlite3 import connect
 from sqlalchemy import *
 import sqlalchemy
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 from backend.database_access import DATABASE
 from backend.db_interface import DatabaseInterface
-
+from backend.classes import *
 
 HOSTNAME = "vps.zgrate.ovh"
 PORT = "3306"
@@ -19,7 +19,8 @@ class SQLAlchemyInterface(DatabaseInterface):
     
     def __init__(self):
         super().__init__()
-        session = Session(bind=engine.connect())
+        self.startSession: sqlalchemy.orm.sessionmaker = sessionmaker()
+        self.startSession.bind(engine)
 
     def authUser(self, login, password):
         pass
@@ -36,8 +37,9 @@ class SQLAlchemyInterface(DatabaseInterface):
     ):
         pass
 
-    @DATABASE.db_query
     def getAccountStatus(self, userId: str, session: Session):
+        with self.startSession() as session:
+
         pass
 
     def getActivationToken(self, userId: str):

@@ -10,7 +10,7 @@ from models import Rental, Car, Reservation, CreditCard
 from flask_cors import CORS
 import schedule
 
-TESTS = False
+TESTS = True
 
 
 class LoggedInUser:
