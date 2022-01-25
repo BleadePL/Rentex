@@ -20,7 +20,11 @@ class SQLAlchemyInterface(DatabaseInterface):
     def __init__(self):
         super().__init__()
         self.startSession: sqlalchemy.orm.sessionmaker = sessionmaker()
-        self.startSession.bind(engine)
+        engine.connect()
+        self.startSession(bind=engine)
+
+    def createSession(self) -> Session:
+        return self.startSession()
 
     def authUser(self, login, password):
         pass
@@ -37,18 +41,27 @@ class SQLAlchemyInterface(DatabaseInterface):
     ):
         pass
 
-    def getAccountStatus(self, userId: str, session: Session):
-        with self.startSession() as session:
-
-        pass
+    def getAccountStatus(self, userId: str):
+        user = self.getUser(userId)
+        if user is None:
+            return None
+        return user.status
 
     def getActivationToken(self, userId: str):
-        pass
+        user = self.getUser(userId)
+        if user is None:
+            return None
+        return user.activationCode
 
     def setAccountStatus(self, userId: str, status: str):
+
+        with self.createSession() as session:
+            session.query(Client).filter(Client.id == userId).update({Client.status: status})
         pass
 
     def getUser(self, userId):
+        with self.createSession() as session:
+            return session.query(Client).get(userId)
         pass
 
     def setActivationToken(self, userId: int, token: str) -> bool:
