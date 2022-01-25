@@ -1,8 +1,10 @@
 # coding: utf-8
+from dataclasses import dataclass
+import datetime
 import enum
 from re import T
 from sqlite3 import Time
-from sqlalchemy import VARCHAR, Enum, BigInteger, CHAR, Column, DECIMAL, ForeignKey, Integer, String, Table, create_engine, text, DateTime
+from sqlalchemy import VARCHAR, Enum, BigInteger, CHAR, Column, DECIMAL, ForeignKey, Integer, String, Table, create_engine, text, DateTime, Boolean
 from sqlalchemy.dialects.mysql import TIME
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -35,30 +37,49 @@ class AccountStatusEnum(str, enum.Enum):
     PAYMENT="PAYMENT"
     LOCKED="LOCKED"
     DELETED="DELETED"
-class LocationType(str,enum.Enum):
+class LocationTypeEnum(str,enum.Enum):
     STATION="STATION"
     CLEAN="CLEAN"
     SERVICE="SERVICE"
     SPECIAL_POINT="SPECIAL_POINT"
     UNKNOWN="UNKNOWN"
 
+@dataclass
 class Car(Base):
+    carId: int
+    brand: str
+    vin: str
+    regCountryCode: str
+    regNumber: str
+    modelName: str
+    passengerNumber: int
+    chargeLevel: int
+    mileage: int
+    currentLocationLat: str
+    currentLocationLong: str
+    status: CarStatusEnum
+    activationCost: String
+    kmCost: String
+    timeCost: String
+    esimNumber: int
+    eSimImei: int
+    rentals: list['Rental']
+    services: list['Service']
+
+
     __tablename__ = 'Cars'
 
     carId = Column(Integer, primary_key=True, unique=True)
     brand = Column(String(30), nullable=False, comment='Nazwa marki (pełna)')
-    vin = Column(CHAR(17), nullable=False, unique=True)
-    regCountryCode = Column(CHAR(2), nullable=False)
+    vin = Column(String(17), nullable=False, unique=True)
+    regCountryCode = Column(String(2), nullable=False)
     regNumber = Column(String(10), nullable=False)
     modelName = Column(String(50), nullable=False)
     passengerNumber = Column(Integer, nullable=False)
-    lastUsed = Column(DateTime, nullable=False)
     chargeLevel = Column(Integer, nullable=False)
     mileage = Column(Integer, nullable=False)
     currentLocationLat = Column(DECIMAL(10, 8), nullable=False)
     currentLocationLong = Column(DECIMAL(11, 8), nullable=False)
-    lastUpdateTime = Column(DateTime, nullable=False)
-    lastService = Column(DateTime, nullable=False)
     status = Column(Enum(CarStatusEnum), nullable=False,
                     comment='ACTIVE - aktywny\\nRESERVED - zarezerwowany\\nINACTIVE - wyłączony z użycia\\nSERVICE - Serwisowany\\nINUSE - w uzyciu\\nUNKNOWN - nieznany stan')
     activationCost = Column(String(30), nullable=False)
@@ -67,11 +88,32 @@ class Car(Base):
     esimNumber = Column(Integer, nullable=False)
     eSimImei = Column(Integer, nullable=False)
 
+    reservations = relationship("Reservation", back_populates="car", lazy='noload')
     rentals = relationship("Rental", back_populates="car", lazy='noload')
     services = relationship("Service", back_populates="car", lazy='noload')
 
-
+@dataclass
 class Client(Base):
+    clientId: int
+    pesel: str
+    surname: str
+    name: str
+    address: str
+    driverLicenceNumber: int 
+    driverLicenceExpirationDate: int 
+    balance: str
+    login: str
+    password: str
+    email: str
+    accountType: AccountTypeEnum
+    activationCode: int
+    status: AccountStatusEnum
+    roles: list['Role']
+    creditCards: list['CreditCard']
+    rentals: list['Rental']
+    reservations: list['Reservation']
+    services: list['Service']
+
     __tablename__ = 'Clients'
 
     clientId = Column(Integer, primary_key=True, unique=True)
@@ -97,7 +139,16 @@ class Client(Base):
     reservations = relationship("Reservation", back_populates="client", lazy='noload')
     services = relationship("Service", back_populates="client", lazy='noload')
 
+@dataclass
 class Service(Base):
+    serviceId: int
+    dateStart: datetime.datetime
+    dateEnd: datetime.datetime
+    description: str
+    location: 'Location'
+    car: 'Car'
+    client: 'Client'
+
     __tablename__ = 'Services'
     serviceId = Column(Integer, primary_key=True, unique=True)
     dateStart = Column(DateTime, nullable=False)
@@ -111,12 +162,21 @@ class Service(Base):
     car = relationship("Car", back_populates="services", lazy='noload')
     client = relationship("Client", back_populates="services", lazy='noload') 
 
-
+@dataclass
 class Location(Base):
+    locationId: int
+    locationType: LocationTypeEnum
+    locationName: str
+    locationAddress: str
+    leaveReward: str
+    locationLat: float
+    locationLong: float
+    services: list['Service']
+
     __tablename__ = 'Locations'
 
     locationId = Column(Integer, primary_key=True, unique=True)
-    locationType = Column(Enum(LocationType), nullable=False,
+    locationType = Column(Enum(LocationTypeEnum), nullable=False,
                           comment='STATION - Stacja benzynowa\\nCLEAN - stacja czyszczenia\\nSERVICE - Serwis\\nSPECIAL_POINT - Punkt specjalny\\nUNKNOWN - nieznany')
     locationName = Column(String(100), nullable=False)
     locationAddress = Column(String(100))
@@ -126,8 +186,12 @@ class Location(Base):
     
     services = relationship("Service", back_populates="location", lazy='noload') 
 
-
+@dataclass
 class Role(Base):
+    roleId: int
+    RoleName: str
+    PermissionsLevel: int 
+
     __tablename__ = 'Roles'
 
     roleId = Column(Integer, primary_key=True, unique=True)
@@ -141,21 +205,37 @@ t_ClientRoles = Table(
     Column('roleId', ForeignKey('Roles.roleId'), index=True, primary_key=True)
 )
 
-
+@dataclass
 class CreditCard(Base):
+    creditCardId: int
+    cardNumber: str
+    expirationDate: datetime.datetime 
+    cardHolderName: str
+    cardHolderAddress: str
+    client: 'Client' 
+
     __tablename__ = 'CreditCards'
 
     creditCardId = Column(Integer, primary_key=True, unique=True)
-    cardNumber = Column(Integer)
-    expirationDate = Column(Integer)
+    cardNumber = Column(String)
+    expirationDate = Column(DateTime)
     cardHolderName = Column(String(30))
     cardHolderAddress = Column(String(30))
 
     clientId = Column(ForeignKey('Clients.clientId'), nullable=False, index=True)
     client = relationship('Client', back_populates="creditCards", lazy="noload")
 
-
+@dataclass
 class Rental(Base):
+    rentalId: int
+    rentalStart: datetime.datetime
+    rentalEnd: datetime.datetime
+    mileage: int
+    cost: str
+    ended: bool
+    car: 'Car'
+    client: 'Client'
+
     __tablename__ = 'Rentals'
 
     rentalId = Column(BigInteger, primary_key=True, unique=True)
@@ -163,25 +243,32 @@ class Rental(Base):
     rentalEnd = Column(DateTime)
     mileage = Column(Integer, nullable=False)
     cost = Column(String(30))
-    ended = Column(Integer, nullable=False)
+    ended = Column(Boolean, nullable=False)
 
     carId = Column(ForeignKey('Cars.carId'), nullable=False, index=True)
     clientId = Column(ForeignKey('Clients.clientId'), index=True)
     car = relationship('Car', back_populates="rentals", lazy='noload')
     client = relationship('Client', back_populates="rentals", lazy='noload')
 
-
+@dataclass
 class Reservation(Base):
+    reservationId: int
+    reservationStart: datetime.datetime
+    reservationEnd: datetime.datetime
+    reservationCost: str
+    car: 'Car'
+    client: 'Client'
+
     __tablename__ = 'Reservations'
 
     reservationId = Column(Integer, primary_key=True, unique=True)
     reservationStart = Column(DateTime, nullable=False)
     reservationEnd = Column(DateTime)
-    reservationCost = Column(Integer, nullable=False)
+    reservationCost = Column(String, nullable=False)
 
     clientId = Column(ForeignKey('Clients.clientId'), index=True)
     carId = Column(ForeignKey('Cars.carId'), nullable=False, index=True)
-    Car = relationship('Car', lazy='noload')
+    car = relationship('Car', back_populates="reservations", lazy='noload')
     client = relationship('Client', back_populates="reservations", lazy='noload')
 
 if __name__ == "__main__":
