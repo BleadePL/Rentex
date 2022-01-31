@@ -240,8 +240,8 @@ class Rental(Base):
 
     rentalId = Column(BigInteger, primary_key=True, unique=True)
     rentalStart = Column(DateTime, nullable=False)
-    rentalEnd = Column(DateTime)
-    mileage = Column(Integer, nullable=False)
+    rentalEnd = Column(DateTime, nullable=True)
+    mileage = Column(Integer, nullable=True)
     cost = Column(String(30))
     ended = Column(Boolean, nullable=False)
 

@@ -228,10 +228,93 @@ class SQLAlchemyInterface(DatabaseInterface):
 
 
     def startReservation(self, reservation: Reservation):
-        pass
+        with self.createSession() as session:
+            user = session.query().get(reservation.clientId)
+            if not user or user.status != AccountStatusEnum.ACTIVE:
+                return False
+            if session.query(Reservation).filter(and_(
+                Reservation.clientId==reservation.clientId,
+                Reservation.reservationStart < datetime.datetime.now(),
+                Reservation.reservationEnd > datetime.datetime.now()
+                )).first():
+                return False
+            if session.query(Rental).filter(and_(
+                Rental.clientId==reservation.clientId,
+                Rental.ended
+                )).first():
+                return False
+            session.begin()
+            try:
+                inserted_reservation = session\
+                    .execute(sql.insert(Reservation)\
+                        .values(
+                            reservationStart=reservation.reservationStart,
+                            reservationEnd=reservation.reservationEnd,
+                            reservationCost=reservation.reservationCost,
+                            clientId=reservation.clientId,
+                            carId=reservation.carId,
+                        )
+                    )
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def startRental(self, userId, carId):
-        pass
+        with self.createSession() as session:
+            car = session.query(Car).get(carId)
+            if not car:
+                return False
+
+            #TODO: check if car is available
+            # reservations
+            if session.query(Reservation).filter(and_(
+                Reservation.carId == carId,
+                Reservation.clientId != userId,
+                Reservation.reservationStart < datetime.datetime.now(),
+                Reservation.reservationEnd > datetime.datetime.now(),
+                )):
+                return False
+            # rentals
+            if session.query(Rental).filter(and_(
+                Rental.carId == carId,
+                not Rental.ended,
+                )):
+                return False
+            
+            user = session.query(Client).get(userId)
+            if not user or user.status != AccountStatusEnum.ACTIVE:
+                return False
+            user_reservation = session.query(Reservation).filter(and_(
+                Reservation.clientId==userId,
+                Reservation.reservationStart < datetime.datetime.now(),
+                Reservation.reservationEnd > datetime.datetime.now()
+                )).first()
+
+            session.begin()
+
+            if user_reservation:
+                if user_reservation.carId != carId:
+                    return False
+                self.endReservation(user_reservation) # TODO: end reservation here
+            try:
+                inserted_rental = session\
+                    .execute(sql.insert(Rental)\
+                        .values(
+                            rentalStart=datetime.datetime.now(),
+                            mileage=car.mileage,
+                            ended=False,
+                            carId=carId,
+                        )
+                    )
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
 
     def endRental(self, rent: Rental):
