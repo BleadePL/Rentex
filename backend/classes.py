@@ -43,7 +43,7 @@ class LocationTypeEnum(str,enum.Enum):
     SERVICE="SERVICE"
     SPECIAL_POINT="SPECIAL_POINT"
     UNKNOWN="UNKNOWN"
-
+# TODO indexing
 @dataclass
 class Car(Base):
     carId: int

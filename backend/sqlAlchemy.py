@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session, sessionmaker
 from backend.database_access import DATABASE
 from backend.db_interface import DatabaseInterface
 from backend.classes import *
+from backend.utils import calculate_gps_distance
+
+import bcrypt
+salt = b'$2b$12$pzEs7Xy4xlrgcpLSrcN71O'  # Temp
 
 HOSTNAME = "vps.zgrate.ovh"
 PORT = "3306"
@@ -26,8 +30,72 @@ class SQLAlchemyInterface(DatabaseInterface):
     def createSession(self) -> Session:
         return self.startSession()
 
+    def getUser(self, userId):
+        with self.createSession() as session:
+            return session.query(Client).get(userId)
+
+    def rentalHistory(self, userId, pageIndex, pageLength):
+        with self.createSession() as session:
+            return session.query(Rental).offset(pageIndex).limit(pageLength).all()
+
+    def getCards(self, userId):
+        with self.createSession() as session:
+            return session.query(CreditCard).filter(CreditCard.clientId == userId).all()
+
+    def browseNearestCars(self, location, distance):
+        cars = []
+        with self.createSession() as session:
+            for car in session.query(Car).filter(Car.status == CarStatusEnum.ACTIVE).all():
+                if calculate_gps_distance((float(location[0]), float(location[1])),
+                                      (float(car.currentLocationLat),
+                                       float(car.currentLocationLong))) <= int(distance):
+                    cars.append(car)
+        return cars
+
+    def browseNearestLocations(self, location, distance):
+        locations = []
+        with self.createSession() as session:
+            for _location in session.query(Location).all():
+                if calculate_gps_distance((float(location[0]), float(location[1])),
+                                      (float(_location.currentLocationLat),
+                                       float(_location.currentLocationLong))) <= int(distance):
+                    locations.append(_location)
+        return locations
+
+    def getRental(self, userId, rentalId):
+        with self.createSession() as session:
+            return session.query(Rental).get(rentalId)
+
+    def getCars(self, pageIndex, pageCount, location, distance):
+        return self.browseNearestCars(location, distance)[int(pageIndex): int(pageIndex) + int(pageCount)]
+
+    def getUsers(self, pageIndex, pageCount, filter: str): # TODO fuck the filter?
+        with self.createSession() as session:
+            return session.query(Rental).offset(pageIndex).limit(pageCount).all()
+
+    def getCard(self, userId, cardId):
+        with self.createSession() as session:
+            return session.query(CreditCard).get(cardId)
+
+    def getLocations(self, pageIndex, pageCount, location, distance):
+        return self.browseNearestLocations(location, distance)[int(pageIndex): int(pageIndex) + int(pageCount)]
+
+    def getService(self, serviceId): 
+        with self.createSession() as session:
+            return session.query(Service).get(serviceId)
+
     def authUser(self, login, password):
-        pass
+        with self.createSession() as session:
+            return session.query(Client)\
+                .filter(and_(
+                    Client.login == login,
+                    Client.password == bcrypt.hashpw(password.encode('utf8'), salt)
+                    )
+                )
+
+    def getRole(self, roleName:str): 
+        with self.createSession() as session:
+            return session.query(Role).filter(Role.RoleName==roleName).first()
 
     def registerUser(
             self,
@@ -39,7 +107,39 @@ class SQLAlchemyInterface(DatabaseInterface):
             email: str,
             pesel: str,
     ):
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                inserted_user = session\
+                    .execute(sql.insert(Client)\
+                        .values(
+                            name=name,
+                            surname=surname,
+                            login=login,
+                            password=password,
+                            address=address,
+                            email=email,
+                            pesel=pesel,
+                            balance= "00.00",
+                            accountType= AccountTypeEnum.PERSONAL,
+                            activationCode= "",
+                            status= AccountStatusEnum.INACTIVE
+                        )
+                    )
+                role_id = self.getRole("Client").roleId
+
+                inserted_role = session\
+                    .execute(sql.insert(t_ClientRoles)\
+                        .values(
+                            user_id=inserted_user.inserted_primary_key[0],
+                            role_id=role_id,
+                        ))
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def getAccountStatus(self, userId: str):
         user = self.getUser(userId)
@@ -54,39 +154,78 @@ class SQLAlchemyInterface(DatabaseInterface):
         return user.activationCode
 
     def setAccountStatus(self, userId: str, status: str):
-
         with self.createSession() as session:
             session.query(Client).filter(Client.id == userId).update({Client.status: status})
         pass
 
-    def getUser(self, userId):
-        with self.createSession() as session:
-            return session.query(Client).get(userId)
-        pass
 
     def setActivationToken(self, userId: int, token: str) -> bool:
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                session.query(Client).get(userId).update({Client.activationCode: token})
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def changePassword(self, userId, newPwd):
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                session.query(Client).get(userId).update({Client.password: bcrypt.hashpw(newPwd.encode('utf8'), salt)})
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def updateLocation(self, carId, location):
-        pass
-
-    def rentalHistory(self, userId, pageIndex, pageLength):
-        pass
-
-    def getCards(self, userId):
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                session.query(Car).get(carId).update({
+                    Car.currentLocationLat: location[0],
+                    Car.currentLocationLong: location[1]
+                    })
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def addCard(self, userId, card: CreditCard):
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                # inserted_card = session\
+                #     .execute(sql.insert(CreditCard)\
+                #         .values(
+                #             car=name,
+                #             surname=surname,
+                #             login=login,
+                #             password=password,
+                #             address=address,
+                #             email=email,
+                #             pesel=pesel,
+                #             balance= "00.00",
+                #             accountType= AccountTypeEnum.PERSONAL,
+                #             activationCode= "",
+                #             status= AccountStatusEnum.INACTIVE
+                #         )
+                #     )
+                pass
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
-    def browseNearestCars(self, location, distance):
-        pass
-
-    def browseNearestLocations(self, location, distance):
-        pass
 
     def startReservation(self, reservation: Reservation):
         pass
@@ -94,14 +233,10 @@ class SQLAlchemyInterface(DatabaseInterface):
     def startRental(self, userId, carId):
         pass
 
-    def getRental(self, userId, rentalId):
-        pass
 
     def endRental(self, rent: Rental):
         pass
 
-    def getCars(self, pageIndex, pageCount, location, distance):
-        pass
 
     def deleteCar(self, carId):
         pass
@@ -109,8 +244,6 @@ class SQLAlchemyInterface(DatabaseInterface):
     def patchCar(self, carId, changes: dict):
         pass
 
-    def getUsers(self, pageIndex, pageCount, filter: str):
-        pass
 
     def deleteUser(self, userId):
         pass
@@ -118,14 +251,10 @@ class SQLAlchemyInterface(DatabaseInterface):
     def patchUser(self, userId, changes: dict):
         pass
 
-    def getCard(self, userId, cardId):
-        pass
 
     def addLocation(self, location: Location):
         pass
 
-    def getLocations(self, pageIndex, pageCount, location, distance):
-        pass
 
     def deleteLocation(self, locationId):
         pass
@@ -139,8 +268,6 @@ class SQLAlchemyInterface(DatabaseInterface):
     def endService(self, service: Service):
         pass
 
-    def getService(self, serviceId):
-        pass
 
     def getServicesHistory(self, carId):
         pass
