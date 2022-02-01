@@ -4,8 +4,8 @@ from time import sleep
 
 from flask.testing import FlaskClient
 
-from backend.classes import AccountStatusEnum
-from models import Location
+from backend.classes import AccountStatusEnum, LocationTypeEnum
+from classes import Location
 from utils import pln_gr_to_gr
 from flask_main import app, RENTAL_DB, MIDDLE_LAT, MIDDLE_LONG
 import json
@@ -41,8 +41,9 @@ class Tests:
         assert RENTAL_DB.getUser(user_id).status == AccountStatusEnum.ACTIVE
         print("Creating a new location")
         locationId = RENTAL_DB.addLocation(
-            Location(name="ORLEN", location_lat=MIDDLE_LAT, location_long=MIDDLE_LONG, location_type="STATION",
-                     location_reward="10.30", location_address="17 stycznia", status="ACTIVE"))
+            Location(locationName="ORLEN", locationLat=MIDDLE_LAT, locationLong=MIDDLE_LONG,
+                     locationType=LocationTypeEnum.SERVICE,
+                     leaveReward="10.30", locationAddress="17 stycznia"))
         assert locationId is not None
         print("Database prepared!")
 
@@ -305,7 +306,7 @@ class Tests:
         assert "rentId" in j
         rental = j["rentId"]
 
-        print("Rental successful " + rental)
+        print(f"Rental successful {rental}")
 
         # Get Rental
         rv = self.client.get("/rent/rent", headers={"Session-Token": self.session_token})
@@ -324,7 +325,7 @@ class Tests:
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))
 
-        print("Current cost of rental: " + str(j["rental"]["totalCost"]))
+        print("Current cost of rental: " + str(j["rental"]["cost"]))
         # Gimmie some time!
         print("Drive the CAR")
         sleep(3)
@@ -346,19 +347,21 @@ class Tests:
         assert rv.status == "200 OK"
 
         j = json.loads(rv.data.decode("utf-8"))
-        print("Current cost of rental: " + str(j["rental"]["totalCost"]))
+        assert float(j["rental"]["cost"]) > 0
+        print(j)
+        print("Current cost of rental: " + str(j["rental"]["cost"]))
 
         print(rental)
         # Finish rental
-        rv = self.client.delete("/rent/rent/" + rental, headers={"Session-Token": self.session_token})
+        rv = self.client.delete(f"/rent/rent/{rental}", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
 
         # Get it from the archive
-        rv = self.client.get("/rent/rent/" + rental, headers={"Session-Token": self.session_token})
+        rv = self.client.get(f"/rent/rent/{rental}", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))
-        assert pln_gr_to_gr(j["rental"]["totalCost"]) > 0
-        print("Final cost of rental: " + str(j["rental"]["totalCost"]) + "\nDriven " + str(
+        assert pln_gr_to_gr(j["rental"]["cost"]) > 0
+        print("Final cost of rental: " + str(j["rental"]["cost"]) + "\nDriven " + str(
             float(j["rental"]["mileage"]) / 1000) + " hm")
 
         # FINISH
@@ -402,40 +405,40 @@ class Tests:
         car = j["cars"][0]
         print("Servicing car " + car["brand"] + " " + car["modelName"])
 
-        RENTAL_DB.carCleanup(car["_id"])
+        RENTAL_DB.carCleanup(car["carId"])
         print("Car cleaned up!")
 
-        rv = self.client.get("/service/car/" + car["_id"], headers={"Session-Token": self.session_token},
+        rv = self.client.get(f"/service/car/{car['carId']}", headers={"Session-Token": self.session_token},
                              content_type='application/json')
         assert rv.status == "200 OK" or rv.status == "204 NO CONTENT"
         # j = json.loads(rv.data.decode("utf-8"))
 
         # service car
         print("Startin car service....")
-        rv = self.client.post("/service", data=json.dumps({"carId": car["_id"]}),
+        rv = self.client.post("/service", data=json.dumps({"carId": car["carId"]}),
                               headers={"Session-Token": self.session_token}, content_type='application/json')
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))
         assert "serviceId" in j
         service = j["serviceId"]
 
-        rv = self.client.get("/service/" + service, headers={"Session-Token": self.session_token},
+        rv = self.client.get(f"/service/{service}", headers={"Session-Token": self.session_token},
                              content_type='application/json')
         assert rv.status == "200 OK"
         print("Car service started!")
 
-        rv2 = self.client.get("/service/car/" + car["_id"], headers={"Session-Token": self.session_token})
+        rv2 = self.client.get(f"/service/car/{car['carId']}", headers={"Session-Token": self.session_token})
         assert rv2.status == "200 OK"
         print("Service in car found!")
 
-        rv = self.client.get("/service/19834jn", headers={"Session-Token": self.session_token})
+        rv = self.client.get("/service/111111", headers={"Session-Token": self.session_token})
         assert rv.status == "204 NO CONTENT"
         print("Invalid service not exists!")
 
-        rv = self.client.delete("/service/" + service, headers={"Session-Token": self.session_token})
+        rv = self.client.delete(f"/service/{service}", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
         print("Service end!")
-        rv = self.client.get("/service/" + service, headers={"Session-Token": self.session_token},
+        rv = self.client.get(f"/service/{service}", headers={"Session-Token": self.session_token},
                              content_type='application/json')
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))

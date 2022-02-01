@@ -308,5 +308,5 @@ class DatabaseInterface:
     def getActiveReservation(self, userId) -> Reservation:
         pass
 
-    def getActiveRental(self, userId) -> Rental:
+    def getActiveRentalOfTheUser(self, userId) -> Rental:
         pass

@@ -196,7 +196,6 @@ class Location(Base):
 
     __tablename__ = 'Locations'
 
-    status = Column(Enum(LocationStatusEnum))
     locationId = Column(Integer, primary_key=True, unique=True)
     locationType = Column(Enum(LocationTypeEnum), nullable=False,
                           comment='STATION - Stacja benzynowa\\nCLEAN - stacja czyszczenia\\nSERVICE - Serwis\\nSPECIAL_POINT - Punkt specjalny\\nUNKNOWN - nieznany')

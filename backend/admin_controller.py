@@ -38,7 +38,7 @@ def getCars():
         return BAD_REQUEST
 
     def getcars(car):
-        d = car.__dict__
+        d = row2dict(car)
         from datetime import datetime
         for e in d:
             if type(d[e]) is datetime:

@@ -1,11 +1,12 @@
 from flask import request, Response, Request
 from flask_login import login_user, logout_user, login_required, current_user
 
+from backend import classes
 from models import Location
 from database_access import RENTAL_DB
 from flask_main import app, login, EMPTY_OK, BAD_REQUEST
 
-from utils import parse_required_fields, calculate_gps_distance
+from utils import parse_required_fields, calculate_gps_distance, row2dict
 
 
 @app.route("/service", methods=["POST"])
@@ -27,13 +28,13 @@ def startService():
                                                 (float(d.locationLat), float(d.locationLong))))
     if len(l) == 0:
         return BAD_REQUEST
-    loc: Location = l[0]
+    loc: classes.Location = l[0]
     if loc is None:
         return BAD_REQUEST
-    id = RENTAL_DB.serviceCar(parsed["carId"], current_user.get_id(), loc._id, "Serwis 1234")
-    if id is None:
+    serviceId = RENTAL_DB.serviceCar(parsed["carId"], current_user.get_id(), loc.locationId, "Serwis 1234")
+    if serviceId is None:
         return BAD_REQUEST
-    return {"serviceId": id}, 200
+    return {"serviceId": serviceId}, 200
 
 
 @app.route("/service/<service_id>", methods=["GET"])
@@ -42,7 +43,7 @@ def getService(service_id: str):
     s = RENTAL_DB.getService(service_id)
     if s is None:
         return {}, 204
-    return {"service": s.__dict__}, 200
+    return {"service": row2dict(s)}, 200
 
 
 @app.route("/service/<service_id>", methods=["DELETE"])
@@ -60,4 +61,4 @@ def deleteService(service_id: str):
 @app.route("/service/car/<car_id>", methods=["GET"])
 @login_required
 def getServices(car_id: str):
-    return {"services": list(map(lambda serv: serv.__dict__, RENTAL_DB.getServicesHistory(car_id)))}, 200
+    return {"services": list(map(lambda serv: row2dict(serv), RENTAL_DB.getServicesHistory(car_id)))}, 200

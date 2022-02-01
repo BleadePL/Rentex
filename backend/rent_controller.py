@@ -48,14 +48,14 @@ def reservate():
 @app.route("/rent/rent", methods=["GET"])
 @login_required
 def getRentOfUser():
-    rental: Rental = RENTAL_DB.getActiveRental(current_user.get_id())
+    rental: Rental = RENTAL_DB.getActiveRentalOfTheUser(current_user.get_id())
     if rental is None:
         return BAD_REQUEST
     pending: PendingRental = rental_timer_task.getRental(rental.rentalId)
     if pending is not None:
         r = row2dict(rental)
         r["mileage"] = pending.distance
-        r["totalCost"] = gr_to_pln_gr(pending.calculate_current_cost())
+        r["cost"] = gr_to_pln_gr(pending.calculate_current_cost())
         return {"rental": r}
     return {"rental": rental}, 200
 
@@ -98,14 +98,14 @@ def getRent(rent_id):
     if rental is not None:
         if rental.rent.renter != current_user.get_id():
             return BAD_REQUEST
-        d = rental.rent.__dict__.copy()
+        d = row2dict(rental.rent)
         d["mileage"] = rental.distance
-        d["totalCost"] = gr_to_pln_gr(rental.calculate_current_cost())
+        d["cost"] = gr_to_pln_gr(rental.calculate_current_cost())
         return {"rental": d}, 200
     r = RENTAL_DB.getRental(current_user.get_id(), rentalId=rent_id)
     if r is None:
         return BAD_REQUEST
-    return {"rental": r.__dict__}, 200
+    return {"rental": row2dict(r)}, 200
 
 
 @app.route("/rent/rent/<rent_id>", methods=["DELETE"])
