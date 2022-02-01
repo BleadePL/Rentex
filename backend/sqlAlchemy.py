@@ -201,7 +201,7 @@ class SQLAlchemyInterface(DatabaseInterface):
     def addCard(self, userId, card: CreditCard):
         with self.createSession() as session:
             session.begin()
-            try:
+            try: # TODO
                 # inserted_card = session\
                 #     .execute(sql.insert(CreditCard)\
                 #         .values(
@@ -473,22 +473,74 @@ class SQLAlchemyInterface(DatabaseInterface):
 
 
     def getServicesHistory(self, carId):
-        pass
+        with self.createSession() as session: 
+            return session.query(Service).filter(Service.carId == carId)
 
     def setNewBalance(self, user_id, new_balance) -> bool:
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_user = session\
+                    .query(Client).filter(Client.clientId == user_id)\
+                        .update({Client.balance: new_balance})
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def getBalance(self, user_id) -> str:
-        pass
+        with self.createSession() as session: 
+            user = session.query(Client).get(user_id)
+            if user:
+                return user.balance
+            return None
 
     def isUserWithEmailInDB(self, email) -> bool:
-        pass
+        with self.createSession() as session: 
+            user = session.query(Client).filter(Client.email == email)
+            if user:
+                return True
+            return False
 
     def isUserWithLoginInDB(self, login) -> bool:
-        pass
+        with self.createSession() as session: 
+            user = session.query(Client).filter(Client.login == login)
+            if user:
+                return True
+            return False
 
     def addCar(self, car: 'dict'):
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                inserted_user = session\
+                    .execute(sql.insert(Car)\
+                        .values(
+                            brand=car["brand"],
+                            vin=car["vin"],
+                            regCountryCode=car["regCountryCode"],
+                            regNumber=car["regNumber"],
+                            modelName=car["modelName"],
+                            passengerNumber=car["passengerNumber"],
+                            chargeLevel=car["chargeLevel"],
+                            mileage=car["mileage"],
+                            currentLocationLat=car["currentLocationLat"],
+                            currentLocationLong=car["currentLocationLong"],
+                            status=car["status"],
+                            activationCost=car["activationCost"],
+                            kmCost=car["kmCost"],
+                            timeCost=car["timeCost"],
+                            esimNumber=car["esimNumber"],
+                            eSimImei=car["eSimImei"]
+                        )
+                    )
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
 
     def dropCars(self):
