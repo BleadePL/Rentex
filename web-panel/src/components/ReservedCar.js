@@ -34,7 +34,7 @@ function ReservedCar({Api, reservation, appManagment, children}){
                     </thead>
                     <tbody>
                         <tr>
-                             <td>{reservation.reservation._id}</td> 
+                             <td>{reservation.reservation.reservationId}</td> 
                         
                         
                             <td>{reservation.reservation.carId}</td>

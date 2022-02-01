@@ -36,7 +36,7 @@ function RentedCar({Api, rental, appManagment, children}){
                     </thead>
                     <tbody>
                         <tr>
-                             <td>{rental._id}</td> 
+                             <td>{rental.rentalId}</td> 
                             <td>{rental.carId}</td>
                             <td>{rental.rentalStart}</td>
                         </tr>

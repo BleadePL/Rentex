@@ -29,7 +29,7 @@ function App() {
   const Login = details =>{
     //Praca na bazie
     // api.login(details.login, details.password, LoadUser , () => setError("invalid"), setError)
-    api.getNearestCars('51.119475', '17.050562', 100000, setCar, console.log, console.log)
+    api.getNearestCars('51.1115', '17.0272', 100000, setCar, console.log, console.log)
     api.getUserDetails(setUser, () => console.log())
     api.getUserReservation(setReservation, () => console.log, () => console.log())
     api.getUserRental(setRented, () => console.log, () => console.log())
@@ -109,8 +109,12 @@ function App() {
                 <h2>Welcome, <span>{user.name}</span></h2>
                 <ul>
                   <li><button name="rent-car" onClick={() => navigate("/rent-car")}>Rent a car</button></li>
-                  <li><button name="browse-cars" onClick={() => navigate("/browse-cars")}>Browse available cars</button></li>
-                  <li><button name="reserved-car" onClick={() => navigate("/browse-reservation")}>Reserved car</button></li>
+                  <li><button name="browse-cars" onClick={() => {
+                    api.getNearestCars('51.11035800', '17.02671100', 100000, setCar, console.log, console.log)
+                    navigate("/browse-cars")}}>Browse available cars</button></li>
+                  <li><button name="reserved-car" onClick={() => {
+                    api.getUserReservation(setReservation, () => console.log, () => console.log())
+                    navigate("/browse-reservation")}}>Reserved car</button></li>
                   <li><button name="rented-car" onClick={() => {
                     api.getUserRental(setRented, () => console.log, () => console.log())
                     navigate("/browse-rental");}
