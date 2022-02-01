@@ -1,14 +1,16 @@
-from curses import echo
-from sqlite3 import connect
+import traceback
+
 from sqlalchemy import *
 import sqlalchemy
+import bcrypt
+import sqlalchemy
+from sqlalchemy import *
 from sqlalchemy.orm import Session, sessionmaker
-from backend.database_access import DATABASE
-from backend.db_interface import DatabaseInterface
+
 from backend.classes import *
+from backend.db_interface import DatabaseInterface
 from backend.utils import calculate_gps_distance
 
-import bcrypt
 salt = b'$2b$12$pzEs7Xy4xlrgcpLSrcN71O'  # Temp
 
 HOSTNAME = "vps.zgrate.ovh"
@@ -17,18 +19,21 @@ USERNAME = "polrentex"
 PASSWORD = "rentex123"
 DB_NAME = "Rentex"
 
-engine = sqlalchemy.create_engine('mysql://' + USERNAME + ':' + PASSWORD + '@' + HOSTNAME + ':' + PORT + '/' + DB_NAME)
+engine = sqlalchemy.create_engine('mysql://' + USERNAME + ':' + PASSWORD + '@' + HOSTNAME + ':' + PORT + '/' + DB_NAME,
+                                  echo=True)
+
 
 class SQLAlchemyInterface(DatabaseInterface):
-    
+
     def __init__(self):
         super().__init__()
         self.startSession: sqlalchemy.orm.sessionmaker = sessionmaker()
         engine.connect()
-        self.startSession(bind=engine)
+        self.startSession.configure(bind=engine)
 
     def createSession(self) -> Session:
-        return self.startSession()
+        sess = self.startSession()
+        return sess
 
     def getUser(self, userId):
         with self.createSession() as session:
@@ -108,38 +113,47 @@ class SQLAlchemyInterface(DatabaseInterface):
             pesel: str,
     ):
         with self.createSession() as session:
-            session.begin()
             try:
-                inserted_user = session\
-                    .execute(sql.insert(Client)\
-                        .values(
-                            name=name,
-                            surname=surname,
-                            login=login,
-                            password=password,
-                            address=address,
-                            email=email,
-                            pesel=pesel,
-                            balance= "00.00",
-                            accountType= AccountTypeEnum.PERSONAL,
-                            activationCode= "",
-                            status= AccountStatusEnum.INACTIVE
-                        )
-                    )
-                role_id = self.getRole("Client").roleId
 
-                inserted_role = session\
-                    .execute(sql.insert(t_ClientRoles)\
-                        .values(
-                            user_id=inserted_user.inserted_primary_key[0],
-                            role_id=role_id,
-                        ))
-            except:
-                session.rollback()
-                return False
-            else:
+                role = self.getRole("Client")
+                user = Client(name=name, surname=surname, login=login, password=password, address=address, email=email,
+                              pesel=pesel,
+                              balance="00.00", accountType=AccountTypeEnum.PERSONAL, activationCode=0,
+                              status=AccountStatusEnum.INACTIVE, roles=[role])
+                session.add(user)
                 session.commit()
-            return True
+
+                session.refresh(user)
+                return user.clientId
+                # inserted_user = session\
+                #     .execute(sql.insert(Client)\
+                #         .values(
+                #             name=name,
+                #             surname=surname,
+                #             login=login,
+                #             password=password,
+                #             address=address,
+                #             email=email,
+                #             pesel=pesel,
+                #             balance= "00.00",
+                #             accountType= AccountTypeEnum.PERSONAL,
+                #             activationCode= "",
+                #             status= AccountStatusEnum.INACTIVE
+                #         )
+                #     )
+                # role_id = self.getRole("Client").roleId
+                #
+                # inserted_role = session\
+                #     .execute(sql.insert(t_ClientRoles)\
+                #         .values(
+                #             user_id=inserted_user.inserted_primary_key[0],
+                #             role_id=role_id,
+                #         ))
+            except Exception as e:
+                print(str(e))
+                traceback.print_tb(e.__traceback__)
+                session.rollback()
+                return None
 
     def getAccountStatus(self, userId: str):
         user = self.getUser(userId)
@@ -155,8 +169,9 @@ class SQLAlchemyInterface(DatabaseInterface):
 
     def setAccountStatus(self, userId: str, status: str):
         with self.createSession() as session:
-            session.query(Client).filter(Client.id == userId).update({Client.status: status})
-        pass
+            session.query(Client).filter(Client.clientId == userId).update({Client.status: status})
+            session.commit()
+        return True
 
 
     def setActivationToken(self, userId: int, token: str) -> bool:
@@ -370,21 +385,44 @@ class SQLAlchemyInterface(DatabaseInterface):
     def addCar(self, car: 'dict'):
         pass
 
-
     def dropCars(self):
-        pass
+        session: sqlalchemy.orm.Session
+        with self.createSession() as session:
+            session.query(Car).delete()
+            session.commit()
 
     def dropRentalArchive(self):
-        pass
+        with self.createSession() as session:
+            session.query(Rental).delete()
+            session.query(Reservation).delete()
+            session.commit()
 
     def dropUsers(self):
-        pass
+        with self.createSession() as session:
+            session.query(Client).delete()
+            session.commit()
 
     def dropLocations(self):
-        pass
+        with self.createSession() as session:
+            session.query(Location).delete()
+            session.commit()
 
     def userCleanup(self, user_id):
-        pass
+        with self.createSession() as session:
+            session.query(Client).filter(Client.clientId == user_id).update({Client.status: AccountStatusEnum.ACTIVE})
+            session.commit()
+
+    # self.rentalDb["User"].update_one({"_id": ObjectId(user._id)},{"$set": {"status": "ACTIVE", "currentRental": "", "rentalArchive": []}})
 
     def carCleanup(self, car_id):
-        pass
+        with self.createSession() as session:
+            session.query(Car).filter(Car.car == car_id).update({Car.status: CarStatusEnum.ACTIVE})
+            session.query(Service).filter(Service.carId == car_id).delete()
+            session.commit()
+
+
+# car = self.getCar(car_id)
+# self.rentalDb["User"].update_one({"_id": ObjectId(car_id)}, {"$set": {"status": "ACTIVE", "currentRental": "", "services": []}})
+
+
+RENTAL_DB = SQLAlchemyInterface()

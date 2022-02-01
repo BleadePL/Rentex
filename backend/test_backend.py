@@ -3,6 +3,7 @@ from time import sleep
 
 from flask.testing import FlaskClient
 
+from backend.classes import AccountStatusEnum
 from models import Location
 from utils import pln_gr_to_gr
 from flask_main import app, RENTAL_DB, MIDDLE_LAT, MIDDLE_LONG
@@ -26,8 +27,8 @@ class Tests:
     def prepareDatabases(self):
         print("Preparing database for tests")
         RENTAL_DB.dropRentalArchive()
-        RENTAL_DB.dropCars()
         RENTAL_DB.dropLocations()
+        RENTAL_DB.dropCars()
         RENTAL_DB.dropUsers()
 
         print("Removed all users. Creating client")
@@ -35,8 +36,8 @@ class Tests:
         user_id = RENTAL_DB.registerUser(name="Fryderyk", surname="Markowski", login="test", password="test",
                                          address="21 października 3020", email="mateusz@gmail.com", pesel="60060535351")
         assert user_id is not None
-        assert RENTAL_DB.setAccountStatus(user_id, "ACTIVE")
-        assert RENTAL_DB.getUser(user_id).status == "ACTIVE"
+        assert RENTAL_DB.setAccountStatus(user_id, AccountStatusEnum.ACTIVE)
+        assert RENTAL_DB.getUser(user_id).status == AccountStatusEnum.ACTIVE
         print("Creating a new location")
         locationId = RENTAL_DB.addLocation(
             Location(name="ORLEN", location_lat=MIDDLE_LAT, location_long=MIDDLE_LONG, location_type="STATION",

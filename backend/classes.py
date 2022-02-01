@@ -1,19 +1,19 @@
 # coding: utf-8
-from dataclasses import dataclass
 import datetime
 import enum
-from re import T
-from sqlite3 import Time
-from sqlalchemy import VARCHAR, Enum, BigInteger, CHAR, Column, DECIMAL, ForeignKey, Integer, String, Table, create_engine, text, DateTime, Boolean
-from sqlalchemy.dialects.mysql import TIME
-from sqlalchemy.orm import relationship
+from dataclasses import dataclass
+
+from sqlalchemy import Enum, BigInteger, CHAR, Column, DECIMAL, ForeignKey, Integer, String, Table, create_engine, text, \
+    DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 # pip install sqlacodegen
 # sqlacodegen mysql+mysqldb://polrentex:rentex123@vps.zgrate.ovh:3306/Rentex --outfile classes.py
 
 Base = declarative_base()
 metadata = Base.metadata
+
 
 class CarStatusEnum(str, enum.Enum):
     ACTIVE="ACTIVE"
@@ -133,7 +133,7 @@ class Client(Base):
     status = Column(Enum(AccountStatusEnum), nullable=False,
                     comment='ACTIVE - Aktywne konto\\nINACTIVE - nieaktwyne konto\\nDOCUMENTS - Brak dokumentow\\nPENDING - wyslano dokumenty, oczekiwanie na potwierdzenie\\nPAYMENT - Brak srodkow na koncie\\nLOCKED - konto zablokowane\\nDELETED - konto usuniete')
 
-    roles = relationship('Role', secondary='ClientRoles', lazy='noload')
+    roles = relationship('Role', secondary='ClientRoles', lazy='noload', cascade="all, delete")
     creditCards = relationship("CreditCard", back_populates="client", lazy='noload')
     rentals = relationship("Rental", back_populates="client", lazy='noload')
     reservations = relationship("Reservation", back_populates="client", lazy='noload')
