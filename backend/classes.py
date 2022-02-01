@@ -120,8 +120,7 @@ class Client(Base):
     surname: str
     name: str
     address: str
-    driverLicenceNumber: int 
-    driverLicenceExpirationDate: int 
+    driverLicenceNumber: str
     balance: str
     login: str
     password: str
@@ -138,12 +137,11 @@ class Client(Base):
     __tablename__ = 'Clients'
 
     clientId = Column(Integer, primary_key=True, unique=True)
-    pesel = Column(CHAR(20), nullable=False)
+    pesel = Column(String(20), nullable=False)
     surname = Column(String(30), nullable=False)
     name = Column(String(30), nullable=False)
     address = Column(String(255), nullable=False)
-    driverLicenceNumber = Column(Integer)
-    driverLicenceExpirationDate = Column(Integer)
+    driverLicenceNumber = Column(String(30), nullable=True)
     balance = Column(String(20), nullable=False, server_default=text("'0'"))
     login = Column(String(20), nullable=False)
     password = Column(String(64), nullable=False)
@@ -238,7 +236,7 @@ class CreditCard(Base):
     __tablename__ = 'CreditCards'
 
     creditCardId = Column(Integer, primary_key=True, unique=True)
-    cardNumber = Column(String)
+    cardNumber = Column(String(20))
     expirationDate = Column(String(5))
     cardHolderName = Column(String(30))
     cardHolderAddress = Column(String(100))

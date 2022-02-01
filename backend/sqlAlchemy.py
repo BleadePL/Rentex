@@ -23,7 +23,6 @@ DB_NAME = "Rentex"
 engine = sqlalchemy.create_engine('mysql://' + USERNAME + ':' + PASSWORD + '@' + HOSTNAME + ':' + PORT + '/' + DB_NAME,
                                   echo=True)
 
-
 class SQLAlchemyInterface(DatabaseInterface):
 
     def __init__(self):
@@ -31,6 +30,17 @@ class SQLAlchemyInterface(DatabaseInterface):
         self.startSession: sqlalchemy.orm.sessionmaker = sessionmaker()
         engine.connect()
         self.startSession.configure(bind=engine)
+        self.seed()
+
+    def seed(self):
+        with self.startSession() as session:
+            if self.getRole("Client") is None:
+                session.add(Role(RoleName="Client", PermissionsLevel=1))
+            if self.getRole("Service") is None:
+                session.add(Role(RoleName="Service", PermissionsLevel=10))
+            if self.getRole("Admin") is None:
+                session.add(Role(RoleName="Admin", PermissionsLevel=100))
+            session.commit()
 
     def createSession(self) -> Session:
         sess = self.startSession()

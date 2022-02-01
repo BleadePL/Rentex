@@ -31,7 +31,6 @@ class Tests:
         RENTAL_DB.dropLocations()
         RENTAL_DB.dropCars()
         RENTAL_DB.dropUsers()
-
         print("Removed all users. Creating client")
 
         user_id = RENTAL_DB.registerUser(name="Fryderyk", surname="Markowski", login="test", password="test",
