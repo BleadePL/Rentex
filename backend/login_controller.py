@@ -90,7 +90,7 @@ def register():
         return {'error': "INVALID_REQUEST"}, 400
 
     register_request = parse_required_fields(request.json,
-                                             ["name", "surname", "login", "password", "address", "email",
+                                             ["name", "surname", "login", "password", "email",
                                               "pesel"])
     if register_request is None:
         return {'error': "INVALID_REQUEST"}, 400
@@ -102,7 +102,7 @@ def register():
     # TODO: Validation of other data
     user_id = RENTAL_DB.registerUser(name=register_request["name"], surname=register_request["surname"],
                                      login=register_request["login"],
-                                     password=register_request["password"], address=register_request["address"],
+                                     password=register_request["password"],
                                      email=register_request["email"], pesel=register_request["pesel"])
     if user_id is None:
         return {"error": "UNKNOWN"}, 400

@@ -84,13 +84,13 @@ def getCards():
 def addCard():
     if request.json is None:
         return {"error": "UNKNOWN"}, 400
-    parsed = parse_required_fields(request.json, ["cardNumber", "expirationDate", "cardHolder", "cvv", "holderAddress"])
+    parsed = parse_required_fields(request.json, ["cardNumber", "expirationDate", "cardHolder", "cvv"])
     if parsed is None:
         return {"error": "UNKNOWN"}, 400
     if not validate_card(parsed["cardNumber"]):
         return {"error": "AUTH_ERROR"}, 400
     card = CreditCard(cardNumber=parsed["cardNumber"], expirationDate=parsed["expirationDate"],
-                      cardHolderName=parsed["cardHolder"], cardHolderAddress=parsed["holderAddress"])
+                      cardHolderName=parsed["cardHolder"])
     if not execute_card_verification(card, parsed["cvv"]):
         return {"error": "BLOCK_ERROR"}, 400
 
@@ -124,7 +124,7 @@ def charge(card_id: str):
         return BAD_REQUEST
 
     if execute_card_charge(int(request.json["amount"]) * 100, card.cardNumber, card.expirationDate, request.json["cvv"],
-                           card.cardHolderName, card.cardHolderAddress):
+                           card.cardHolderName):
         RENTAL_DB.setNewBalance(current_user.get_id(),
                                 gr_to_pln_gr(pln_gr_to_gr(user.balance) + int(request.json["amount"]) * 100))
         return EMPTY_OK

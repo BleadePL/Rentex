@@ -119,7 +119,6 @@ class Client(Base):
     pesel: str
     surname: str
     name: str
-    address: str
     driverLicenceNumber: str
     balance: str
     login: str
@@ -140,7 +139,6 @@ class Client(Base):
     pesel = Column(String(20), nullable=False)
     surname = Column(String(30), nullable=False)
     name = Column(String(30), nullable=False)
-    address = Column(String(255), nullable=False)
     driverLicenceNumber = Column(String(30), nullable=True)
     balance = Column(String(20), nullable=False, server_default=text("'0'"))
     login = Column(String(20), nullable=False)
@@ -186,7 +184,6 @@ class Location(Base):
     locationId: int
     locationType: LocationTypeEnum
     locationName: str
-    locationAddress: str
     leaveReward: str
     locationLat: float
     locationLong: float
@@ -198,7 +195,6 @@ class Location(Base):
     locationType = Column(Enum(LocationTypeEnum), nullable=False,
                           comment='STATION - Stacja benzynowa\\nCLEAN - stacja czyszczenia\\nSERVICE - Serwis\\nSPECIAL_POINT - Punkt specjalny\\nUNKNOWN - nieznany')
     locationName = Column(String(100), nullable=False)
-    locationAddress = Column(String(100))
     leaveReward = Column(String(30), nullable=False)
     locationLat = Column(DECIMAL(10, 8), nullable=False)
     locationLong = Column(DECIMAL(11, 8), nullable=False)
@@ -230,7 +226,6 @@ class CreditCard(Base):
     cardNumber: str
     expirationDate: str
     cardHolderName: str
-    cardHolderAddress: str
     client: 'Client' 
 
     __tablename__ = 'CreditCards'
@@ -239,7 +234,6 @@ class CreditCard(Base):
     cardNumber = Column(String(20))
     expirationDate = Column(String(5))
     cardHolderName = Column(String(30))
-    cardHolderAddress = Column(String(100))
 
     clientId = Column(ForeignKey('Clients.clientId'), nullable=False, index=True)
     client = relationship('Client', back_populates="creditCards", lazy="noload")

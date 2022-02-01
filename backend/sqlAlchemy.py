@@ -117,7 +117,6 @@ class SQLAlchemyInterface(DatabaseInterface):
             surname: str,
             login: str,
             password: str,
-            address: str,
             email: str,
             pesel: str,
     ):
@@ -126,7 +125,7 @@ class SQLAlchemyInterface(DatabaseInterface):
 
                 role = self.getRole("Client")
                 user = Client(name=name, surname=surname, login=login,
-                              password=bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()), address=address,
+                              password=bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()),
                               email=email,
                               pesel=pesel,
                               balance="00.00", accountType=AccountTypeEnum.PERSONAL, activationCode=0,

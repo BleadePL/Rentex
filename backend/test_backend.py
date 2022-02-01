@@ -34,7 +34,7 @@ class Tests:
         print("Removed all users. Creating client")
 
         user_id = RENTAL_DB.registerUser(name="Fryderyk", surname="Markowski", login="test", password="test",
-                                         address="21 października 3020", email="mateusz@gmail.com", pesel="60060535351")
+                                         email="mateusz@gmail.com", pesel="60060535351")
         assert user_id is not None
         assert RENTAL_DB.setAccountStatus(user_id, AccountStatusEnum.ACTIVE)
         assert RENTAL_DB.getUser(user_id).status == AccountStatusEnum.ACTIVE
@@ -42,7 +42,7 @@ class Tests:
         locationId = RENTAL_DB.addLocation(
             Location(locationName="ORLEN", locationLat=MIDDLE_LAT, locationLong=MIDDLE_LONG,
                      locationType=LocationTypeEnum.SERVICE,
-                     leaveReward="10.30", locationAddress="17 stycznia"))
+                     leaveReward="10.30"))
         assert locationId is not None
         print("Database prepared!")
 
