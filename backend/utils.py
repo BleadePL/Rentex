@@ -5,6 +5,19 @@ from bson import ObjectId
 from models import CreditCard
 
 
+def row2dict(row):
+    """
+    Converts row objects (Table) to dictionary
+    :param row: Row-object of table
+    :return: dict
+    """
+    d = {}
+    for column in row.__table__.columns:
+        d[column.name] = str(getattr(row, column.name))
+
+    return d
+
+
 def parse_required_fields(json, fields):
     if json is None:
         return None

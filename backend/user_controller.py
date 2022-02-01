@@ -2,9 +2,9 @@ import bcrypt
 from flask import request
 from flask_login import login_required, current_user
 
+from backend.classes import CreditCard
 from db_interface import DatabaseInterface
 from flask_main import LoggedInUser
-from models import CreditCard
 from utils import parse_required_fields, validate_card, execute_card_verification, is_latitude_valid, \
     is_longitude_valid, execute_card_charge, gr_to_pln_gr, pln_gr_to_gr
 from database_access import RENTAL_DB
@@ -23,7 +23,7 @@ def getUserDetails():
         return BAD_REQUEST
 
     return {
-        "userId": user._id,
+        "userId": user.clientId,
         "login": user.login,
         "email": user.email,
         "name": user.name,
@@ -76,7 +76,7 @@ def getRentalHistory():
 @login_required
 def getCards():
     cards = RENTAL_DB.getCards(current_user.get_id())
-    return {"cards": list(map(lambda card: card._id, cards))}, 200
+    return {"cards": list(map(lambda card: card.creditCardId, cards))}, 200
 
 
 @app.route("/user/cards", methods=["POST"])
@@ -89,14 +89,14 @@ def addCard():
         return {"error": "UNKNOWN"}, 400
     if not validate_card(parsed["cardNumber"]):
         return {"error": "AUTH_ERROR"}, 400
-    card = CreditCard(number=parsed["cardNumber"], expiration=parsed["expirationDate"],
-                      holder_name=parsed["cardHolder"], holder_address=parsed["holderAddress"])
+    card = CreditCard(cardNumber=parsed["cardNumber"], expirationDate=parsed["expirationDate"],
+                      cardHolderName=parsed["cardHolder"], cardHolderAddress=parsed["holderAddress"])
     if not execute_card_verification(card, parsed["cvv"]):
         return {"error": "BLOCK_ERROR"}, 400
 
     if RENTAL_DB.addCard(current_user.get_id(), card):
-        return EMPTY_OK
-    return {"error": "UNKNOWN"}, BAD_REQUEST
+        return {}
+    return {"error": "UNKNOWN"}, 400
 
 
 @app.route("/user/card/<card_id>", methods=["GET"])

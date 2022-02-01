@@ -2,6 +2,7 @@ import os
 
 from flask import request, send_file
 
+from backend.utils import row2dict
 from database_access import RENTAL_DB
 from flask_main import app, BAD_REQUEST, EMPTY_OK, PHOTOS_TARGET, rental_timer_task
 from utils import parse_required_fields, is_latitude_valid, is_longitude_valid
@@ -203,7 +204,7 @@ def getAdminUserDetails(user_id):
     if u is None:
         return BAD_REQUEST
     u.password = "<SHADED>"
-    return {"user": u.__dict__}, 200
+    return {"user": row2dict(u)}, 200
     pass
 
 

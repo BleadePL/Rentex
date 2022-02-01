@@ -7,6 +7,7 @@ from sqlalchemy import Enum, BigInteger, CHAR, Column, DECIMAL, ForeignKey, Inte
     DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+CHARGE_LEVEL_DISTANCE = 5  # TODO: Circa 5Km on 1% charge
 
 # pip install sqlacodegen
 # sqlacodegen mysql+mysqldb://polrentex:rentex123@vps.zgrate.ovh:3306/Rentex --outfile classes.py
@@ -94,6 +95,23 @@ class Car(Base):
     reservations = relationship("Reservation", back_populates="car", lazy='noload')
     rentals = relationship("Rental", back_populates="car", lazy='noload')
     services = relationship("Service", back_populates="car", lazy='noload')
+
+    def to_dict_with_less_details(self):
+        return {
+            'carId': self.carId,
+            'brand': self.brand,
+            'regNumber': self.regCountryCode + self.regNumber,
+            'model': self.modelName,
+            'seats': self.passengerNumber,
+            'charge': self.chargeLevel,
+            'distanceLeft': self.chargeLevel * CHARGE_LEVEL_DISTANCE,
+            'activationCost': self.activationCost,
+            'kmCost': self.kmCost,
+            'timeCost': self.timeCost,
+            'locationLat': self.currentLocationLat,
+            'locationLong': self.currentLocationLong
+
+        }
 
 @dataclass
 class Client(Base):
@@ -213,7 +231,7 @@ t_ClientRoles = Table(
 class CreditCard(Base):
     creditCardId: int
     cardNumber: str
-    expirationDate: datetime.datetime 
+    expirationDate: str
     cardHolderName: str
     cardHolderAddress: str
     client: 'Client' 
@@ -222,9 +240,9 @@ class CreditCard(Base):
 
     creditCardId = Column(Integer, primary_key=True, unique=True)
     cardNumber = Column(String)
-    expirationDate = Column(DateTime)
+    expirationDate = Column(String(5))
     cardHolderName = Column(String(30))
-    cardHolderAddress = Column(String(30))
+    cardHolderAddress = Column(String(100))
 
     clientId = Column(ForeignKey('Clients.clientId'), nullable=False, index=True)
     client = relationship('Client', back_populates="creditCards", lazy="noload")
@@ -268,7 +286,7 @@ class Reservation(Base):
     reservationId = Column(Integer, primary_key=True, unique=True)
     reservationStart = Column(DateTime, nullable=False)
     reservationEnd = Column(DateTime)
-    reservationCost = Column(String, nullable=False)
+    reservationCost = Column(String(30))
 
     clientId = Column(ForeignKey('Clients.clientId'), index=True)
     carId = Column(ForeignKey('Cars.carId'), nullable=False, index=True)

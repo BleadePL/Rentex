@@ -1,4 +1,5 @@
 import io
+import os
 from time import sleep
 
 from flask.testing import FlaskClient
@@ -106,17 +107,17 @@ class Tests:
         assert "userId" in j
         print("User registered!")
         print("[Admin] Activating user details...")
-        rv = self.client.post("/admin/user/" + j["userId"] + "/activate")
+        rv = self.client.post("/admin/user/" + str(j["userId"]) + "/activate")
         assert rv.status == "200 OK"
         print("User Activated!")
         print("[Admin] Getting user details...")
-        rv = self.client.get("/admin/user/" + j["userId"], content_type='application/json')
+        rv = self.client.get(f"/admin/user/{j['userId']}", content_type='application/json')
         assert rv.status == "200 OK"
         js = json.loads(rv.data.decode("utf-8"))
         assert js["user"]["login"] == "Nowy_login"
         print("User " + js["user"]["login"] + " pomyslnie zaladowany!")
         print("[Admin] Deleting user....")
-        rv = self.client.delete("/admin/user/" + j["userId"])
+        rv = self.client.delete(f"/admin/user/{j['userId']}")
         assert rv.status == "200 OK"
         print("Deleted!")
 
@@ -132,8 +133,10 @@ class Tests:
         assert rv.status == "400 BAD REQUEST"
         print("Yeah, that was fake... Now for real")
         rv = self.client.post("/login/uploadphotos",
-                              data={"front": (open("test_images/front.png", mode="rb"), "front.png"),
-                                    "back": (open("test_images/back.png", mode="rb"), "back.png")},
+                              data={"front": (
+                              open(os.path.join("backend", "test_images", "front.png"), mode="rb"), "front.png"),
+                                    "back": (
+                                    open(os.path.join("backend", "test_images", "back.png"), mode="rb"), "back.png")},
                               content_type='multipart/form-data',
                               headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
@@ -158,9 +161,7 @@ class Tests:
             "cardHolder": "Jan Kowalski",
             "cvv": 123,
             "holderAddress": "17 stycznia 24, 10-100 Warszawa, Polska"
-        }),
-                              content_type='application/json',
-                              headers={"Session-Token": self.session_token})
+        }), content_type='application/json', headers={"Session-Token": self.session_token})
 
         assert rv.status == "200 OK"
         print("Added new card!")
@@ -169,12 +170,12 @@ class Tests:
         j = json.loads(rv.data.decode("utf-8"))
         assert len(j["cards"]) > 0
         card_id = (j["cards"])[0]
-        rv = self.client.get("/user/card/" + card_id, headers={"Session-Token": self.session_token})
+        rv = self.client.get(f"/user/card/{card_id}", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))
         assert j["lastDigits"] == "4932"
         print("Card successfully added and retrivied! Trying to charge it")
-        rv = self.client.post("/user/card/" + card_id + "/charge", data=json.dumps({'amount': 50, 'cvv': 134}),
+        rv = self.client.post(f"/user/card/{card_id}/charge", data=json.dumps({'amount': 50, 'cvv': 134}),
                               headers={"Session-Token": self.session_token}, content_type='application/json')
         assert rv.status == "200 OK"
 
@@ -240,21 +241,21 @@ class Tests:
         assert len(j["cars"]) + 1 > length
         car = j["cars"][0]
 
-        print("Using car " + car["brand"] + " " + car["model"] + " -> " + car["carId"])
+        print(f"Using car {car['brand']} {car['model']} -> {car['carId']}")
 
         # check if client has not reservation
         rv = self.client.get("/rent/reservate", headers={"Session-Token": self.session_token})
         if rv.status == "200 OK":
             rv = self.client.delete(
                 "/admin/forcecleanreservation/" + json.loads(rv.data.decode("utf-8"))["reservation"][
-                    "_id"] + "/" + user_id, headers={"Session-Token": self.session_token})
+                    "_id"] + "/" + str(user_id), headers={"Session-Token": self.session_token})
             assert rv.status == "200 OK"
 
         # Check if there is no rental
         rv = self.client.get("/rent/rent", headers={"Session-Token": self.session_token})
         if rv.status == "200 OK":
             j = (json.loads(rv.data.decode("utf-8")))["rental"]
-            rv = self.client.delete("/admin/forcecleanrental/" + j["_id"] + "/" + user_id,
+            rv = self.client.delete("/admin/forcecleanrental/" + j["_id"] + "/" + str(user_id),
                                     headers={"Session-Token": self.session_token})
             assert rv.status == "200 OK"
 
@@ -265,24 +266,25 @@ class Tests:
         j = json.loads(rv.data)
         assert "resId" in j
         resId = j["resId"]
-        print("Reservation of car " + car["carId"] + " success!")
+        print(f"Reservation of car {car['carId']} successfull!")
 
         # Wait a moment
         print("Let the reservation pass a little bit")
         sleep(3)
 
         # Get it again
-        rv = self.client.get("/rent/reservation/" + resId, headers={"Session-Token": self.session_token})
+        rv = self.client.get(f"/rent/reservation/{resId}", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
         print("Reservation still active....")
 
         # Cancel reservation
-        rv = self.client.delete("/rent/reservation/" + resId, headers={"Session-Token": self.session_token})
+        rv = self.client.delete(f"/rent/reservation/{resId}", headers={"Session-Token": self.session_token})
         assert rv.status == "200 OK"
         print("Reservation ended!")
 
-        rv = self.client.get("/rent/reservation/" + resId, headers={"Session-Token": self.session_token})
-        assert rv.status == "400 BAD REQUEST"
+        rv = self.client.get(f"/rent/reservation/{resId}", headers={"Session-Token": self.session_token})
+        assert rv.status == "200 OK"
+        assert rv.json["reservation"]["reservationEnd"] is not None
         assert RENTAL_DB.getCar(car["carId"]).status == "ACTIVE"
         print("Yep, reservation don't exists now")
 
@@ -293,7 +295,7 @@ class Tests:
         assert len(j["cards"]) != 0
         cardId = j["cards"][0]
 
-        print("Paying for rental with a card " + cardId)
+        print(f"Paying for rental with a card {cardId}")
 
         # Rent the car
         rv = self.client.post("/rent/rent", data=json.dumps({"carId": car["carId"], "cvv": 123, "paymentType": cardId}),
@@ -322,7 +324,7 @@ class Tests:
         assert rv.status == "200 OK"
         j = json.loads(rv.data.decode("utf-8"))
 
-        print("Current cost of rental: " + j["rental"]["totalCost"])
+        print("Current cost of rental: " + str(j["rental"]["totalCost"]))
         # Gimmie some time!
         print("Drive the CAR")
         sleep(3)
@@ -344,7 +346,7 @@ class Tests:
         assert rv.status == "200 OK"
 
         j = json.loads(rv.data.decode("utf-8"))
-        print("Current cost of rental: " + j["rental"]["totalCost"])
+        print("Current cost of rental: " + str(j["rental"]["totalCost"]))
 
         print(rental)
         # Finish rental

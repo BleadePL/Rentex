@@ -41,7 +41,7 @@ def loginToSystem():
     # TODOREMOVE
     user = RENTAL_DB.authUser(l, pas)
     if user is not None:
-        user_id = user._id
+        user_id = user.clientId
         u = next((user for user in logged_in_users if user.get_id() == user_id), None)
         if u is not None:
             logged_in_users.remove(u)
@@ -125,9 +125,9 @@ def uploadPhoto():
     if "front" not in request.files and "back" not in request.files:
         return BAD_REQUEST
     front = request.files["front"]
-    front.save(PHOTOS_TARGET + "/" + current_user.get_id() + "_front_" + front.filename)
+    front.save(os.path.join(PHOTOS_TARGET, f"{current_user.get_id()}_front_{front.filename}"))
     back = request.files["back"]
-    back.save(PHOTOS_TARGET + "/" + current_user.get_id() + "_back_" + back.filename)
+    back.save(os.path.join(PHOTOS_TARGET, f"{current_user.get_id()}_back_{front.filename}"))
     return EMPTY_OK
 
 

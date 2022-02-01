@@ -1,6 +1,8 @@
 from flask import request
 from flask_login import login_required, current_user
 
+from backend.classes import Client, Rental
+from backend.utils import row2dict
 from database_access import RENTAL_DB
 from flask_main import app, EMPTY_OK, BAD_REQUEST, rental_timer_task, PendingRental
 from utils import parse_required_fields, gr_to_pln_gr
@@ -12,7 +14,7 @@ def getReservation(reservation_id: str):
     res = RENTAL_DB.getReservation(current_user.get_id(), reservation_id)
     if res is None:
         return BAD_REQUEST
-    return {"reservation": res.__dict__}, 200
+    return {"reservation": row2dict(res)}, 200
 
 
 @app.route("/rent/reservation/<reservation_id>", methods=["DELETE"])
@@ -27,12 +29,10 @@ def deleteReservation(reservation_id: str):
 @app.route("/rent/reservate", methods=["GET"])
 @login_required
 def getReservationOfUser():
-    user = RENTAL_DB.getUser(current_user.get_id())
-    if user is None:
+    reservation = RENTAL_DB.getActiveReservation(current_user.get_id())
+    if reservation is None:
         return BAD_REQUEST
-    if user.reservation is None:
-        return {}, 204
-    return {"reservation": user.reservation}, 200
+    return {"reservation": row2dict(reservation)}, 200
 
 @app.route("/rent/reservate", methods=["POST"])
 @login_required
@@ -48,18 +48,16 @@ def reservate():
 @app.route("/rent/rent", methods=["GET"])
 @login_required
 def getRentOfUser():
-    user = RENTAL_DB.getUser(current_user.get_id())
-    if user is None:
+    rental: Rental = RENTAL_DB.getActiveRental(current_user.get_id())
+    if rental is None:
         return BAD_REQUEST
-    if user.currentRental is None or user.currentRental == "":
-        return {}, 204
-    pending: PendingRental = rental_timer_task.getRental(user.currentRental["_id"])
+    pending: PendingRental = rental_timer_task.getRental(rental.rentalId)
     if pending is not None:
-        r = user.currentRental.copy()
+        r = row2dict(rental)
         r["mileage"] = pending.distance
         r["totalCost"] = gr_to_pln_gr(pending.calculate_current_cost())
         return {"rental": r}
-    return {"rental": user.currentRental}, 200
+    return {"rental": rental}, 200
 
 
 @app.route("/rent/rent", methods=["POST"])
