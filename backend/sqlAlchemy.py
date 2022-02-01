@@ -216,7 +216,7 @@ class SQLAlchemyInterface(DatabaseInterface):
     def addCard(self, userId, card: CreditCard):
         with self.createSession() as session:
             session.begin()
-            try:
+            try: # TODO
                 # inserted_card = session\
                 #     .execute(sql.insert(CreditCard)\
                 #         .values(
@@ -280,7 +280,7 @@ class SQLAlchemyInterface(DatabaseInterface):
     def startRental(self, userId, carId):
         with self.createSession() as session:
             car = session.query(Car).get(carId)
-            if not car:
+            if not car or car.status != CarStatusEnum.ACTIVE:
                 return False
 
             #TODO: check if car is available
@@ -333,57 +333,229 @@ class SQLAlchemyInterface(DatabaseInterface):
 
 
     def endRental(self, rent: Rental):
-        pass
+        with self.createSession() as session:
+            rental = session.query(Rental).get(rent.rentalId)
+            if not rental or rental.ended:
+                return False
+            try:
+                updated_rental = session\
+                    .query(Rental).filter(Rental.rentalId == rent.rentalId)\
+                        .update({
+                            Rental.rentalEnd: rent.rentalEnd,
+                            Rental.mileage: rent.mileage,
+                            Rental.cost: rent.cost,
+                            Rental.ended: rent.ended,
+                        })
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
 
     def deleteCar(self, carId):
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_car = session\
+                    .query(Car).filter(Car.carId == carId)\
+                        .update({
+                            Car.status: CarStatusEnum.DELETED
+                        })
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def patchCar(self, carId, changes: dict):
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_car = session\
+                    .query(Car).filter(Car.carId == carId)\
+                        .update({
+                            Car.status: CarStatusEnum.DELETED
+                        })
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
 
     def deleteUser(self, userId):
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_user = session\
+                    .query(Client).filter(Client.clientId == userId)\
+                        .update({
+                            Client.status: AccountStatusEnum.DELETED
+                        })
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def patchUser(self, userId, changes: dict):
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_user = session\
+                    .query(Client).filter(Client.clientId == userId)\
+                        .update(changes)
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
 
     def addLocation(self, location: Location):
-        pass
-
+        with self.createSession() as session: 
+            try:
+                inserted_location = session\
+                    .add(location)
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def deleteLocation(self, locationId):
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_location = session\
+                    .query(Location).filter(Location.locationId == locationId)\
+                        .update({Location.status: LocationStatusEnum.DELETED})
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def patchLocation(self, locationId, changes: dict):
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_location = session\
+                    .query(Location).filter(Location.locationId == locationId)\
+                        .update(changes)
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
+
 
     def serviceCar(self, carId, userId, locationId, description="") -> str:
-        pass
+        with self.createSession() as session: 
+            try:
+                inserted_service = session\
+                    .execute(sql.insert(Service)\
+                        .values(
+                            dateStart=datetime.datetime.now(),
+                            clientId=userId,
+                            carId=carId,
+                            locationId=locationId,
+                            description=description
+                        )
+                    )
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def endService(self, service: Service):
-        pass
+        with self.createSession() as session: 
+            try:
+                inserted_service = session\
+                    .query(Service).filter(Service.serviceId == service.serviceId)\
+                        .update({Service.dateEnd: datetime.datetime.now()})
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
 
     def getServicesHistory(self, carId):
-        pass
+        with self.createSession() as session: 
+            return session.query(Service).filter(Service.carId == carId)
 
     def setNewBalance(self, user_id, new_balance) -> bool:
-        pass
+        with self.createSession() as session: 
+            try:
+                updated_user = session\
+                    .query(Client).filter(Client.clientId == user_id)\
+                        .update({Client.balance: new_balance})
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def getBalance(self, user_id) -> str:
-        pass
+        with self.createSession() as session: 
+            user = session.query(Client).get(user_id)
+            if user:
+                return user.balance
+            return None
 
     def isUserWithEmailInDB(self, email) -> bool:
-        pass
+        with self.createSession() as session: 
+            user = session.query(Client).filter(Client.email == email)
+            if user:
+                return True
+            return False
 
     def isUserWithLoginInDB(self, login) -> bool:
-        pass
+        with self.createSession() as session: 
+            user = session.query(Client).filter(Client.login == login)
+            if user:
+                return True
+            return False
 
     def addCar(self, car: 'dict'):
-        pass
+        with self.createSession() as session:
+            session.begin()
+            try:
+                inserted_user = session\
+                    .execute(sql.insert(Car)\
+                        .values(
+                            brand=car["brand"],
+                            vin=car["vin"],
+                            regCountryCode=car["regCountryCode"],
+                            regNumber=car["regNumber"],
+                            modelName=car["modelName"],
+                            passengerNumber=car["passengerNumber"],
+                            chargeLevel=car["chargeLevel"],
+                            mileage=car["mileage"],
+                            currentLocationLat=car["currentLocationLat"],
+                            currentLocationLong=car["currentLocationLong"],
+                            status=car["status"],
+                            activationCost=car["activationCost"],
+                            kmCost=car["kmCost"],
+                            timeCost=car["timeCost"],
+                            esimNumber=car["esimNumber"],
+                            eSimImei=car["eSimImei"]
+                        )
+                    )
+            except:
+                session.rollback()
+                return False
+            else:
+                session.commit()
+            return True
 
     def dropCars(self):
         session: sqlalchemy.orm.Session
