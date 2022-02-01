@@ -53,7 +53,6 @@ class Car(Base):
     carId: int
     brand: str
     vin: str
-    regCountryCode: str
     regNumber: str
     modelName: str
     passengerNumber: int
@@ -65,7 +64,6 @@ class Car(Base):
     activationCost: String
     kmCost: String
     timeCost: String
-    esimNumber: int
     eSimImei: int
     rentals: list['Rental']
     services: list['Service']
@@ -76,7 +74,6 @@ class Car(Base):
     carId = Column(Integer, primary_key=True, unique=True)
     brand = Column(String(30), nullable=False, comment='Nazwa marki (pełna)')
     vin = Column(String(17), nullable=False, unique=True)
-    regCountryCode = Column(String(2), nullable=False)
     regNumber = Column(String(10), nullable=False)
     modelName = Column(String(50), nullable=False)
     passengerNumber = Column(Integer, nullable=False)
@@ -89,7 +86,6 @@ class Car(Base):
     activationCost = Column(String(30), nullable=False)
     kmCost = Column(String(30), nullable=False)
     timeCost = Column(String(30), nullable=False)
-    esimNumber = Column(Integer, nullable=False)
     eSimImei = Column(Integer, nullable=False)
 
     reservations = relationship("Reservation", back_populates="car", lazy='noload')
@@ -100,7 +96,7 @@ class Car(Base):
         return {
             'carId': self.carId,
             'brand': self.brand,
-            'regNumber': self.regCountryCode + self.regNumber,
+            'regNumber': self.regNumber,
             'model': self.modelName,
             'seats': self.passengerNumber,
             'charge': self.chargeLevel,

@@ -518,7 +518,6 @@ class SQLAlchemyInterface(DatabaseInterface):
             try:
                 car = Car(brand=car["brand"],
                           vin=car["vin"],
-                          regCountryCode=car["regCountryCode"],
                           regNumber=str(car["regNumber"]),
                           modelName=car["model"],
                           passengerNumber=car["seats"],
@@ -530,7 +529,6 @@ class SQLAlchemyInterface(DatabaseInterface):
                           activationCost=car["activationCost"],
                           kmCost=car["kmCost"],
                           timeCost=car["timeCost"],
-                          esimNumber=car["esimNumber"],
                           eSimImei=car["esimImei"])
                 session.add(car)
             except Exception as e:
