@@ -211,7 +211,11 @@ if __name__ == "flask_main":
     app = Flask("Wypozyczalnia Aut BACKEND")
     app.secret_key = secrets.token_hex()
     login = LoginManager(app)
-    cors = CORS(app)
+    cors = CORS(
+        app,
+        origins=["http://localhost:3000","http://127.0.0.1:3000"],
+        supports_credentials=True
+    )
     BAD_REQUEST = {}, 400
     EMPTY_OK = {}, 200
     PHOTOS_TARGET = "licences"
