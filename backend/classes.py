@@ -22,13 +22,12 @@ class CarStatusEnum(str, enum.Enum):
     SERVICE="SERVICE"
     INUSE="INUSE"
     UNKNOWN="UNKNOWN"
-
+    DELETED="DELETED"
 class AccountTypeEnum(str, enum.Enum):
     PERSONAL="PERSONAL"
     COMPANY="COMPANY"
     ORGANISATION="ORGANISATION"
     UNKNOWN="UNKNOWN"
-
 class AccountStatusEnum(str, enum.Enum):
     ACTIVE="ACTIVE"
     INACTIVE="INACTIVE"
@@ -43,6 +42,10 @@ class LocationTypeEnum(str,enum.Enum):
     SERVICE="SERVICE"
     SPECIAL_POINT="SPECIAL_POINT"
     UNKNOWN="UNKNOWN"
+class LocationStatusEnum(str, enum.Enum):
+    ACTIVE="ACTIVE"
+    DELETED="DELETED"
+
 # TODO indexing
 @dataclass
 class Car(Base):
@@ -175,6 +178,7 @@ class Location(Base):
 
     __tablename__ = 'Locations'
 
+    status = Column(Enum(LocationStatusEnum))
     locationId = Column(Integer, primary_key=True, unique=True)
     locationType = Column(Enum(LocationTypeEnum), nullable=False,
                           comment='STATION - Stacja benzynowa\\nCLEAN - stacja czyszczenia\\nSERVICE - Serwis\\nSPECIAL_POINT - Punkt specjalny\\nUNKNOWN - nieznany')
