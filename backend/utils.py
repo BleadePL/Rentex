@@ -5,6 +5,19 @@ from bson import ObjectId
 from models import CreditCard
 
 
+def row2dict(row):
+    """
+    Converts row objects (Table) to dictionary
+    :param row: Row-object of table
+    :return: dict
+    """
+    d = {}
+    for column in row.__table__.columns:
+        d[column.name] = (getattr(row, column.name))
+
+    return d
+
+
 def parse_required_fields(json, fields):
     if json is None:
         return None
@@ -83,7 +96,7 @@ def pln_gr_to_gr(pln_gr: str) -> int:
     return int(s[0]) * 100 + int(s[1])
 
 
-def execute_card_charge(amount, cardNumber, cardExpiration, cvv, holder, address) -> bool:
+def execute_card_charge(amount, cardNumber, cardExpiration, cvv, holder) -> bool:
     return True
 
 
@@ -103,8 +116,7 @@ def charge_card(rentalCostGr: int, chargeBalance: bool = False, card: CreditCard
     else:
         if cvv == 0 or card is None:
             return False
-        return execute_card_charge(rentalCostGr, card.cardNumber, card.expirationDate, cvv, card.cardHolderName,
-                                   card.cardHolderAddress)
+        return execute_card_charge(rentalCostGr, card.cardNumber, card.expirationDate, cvv, card.cardHolderName)
 
 
 def convertObjectIdsToStr(object_):

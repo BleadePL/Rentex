@@ -301,7 +301,12 @@ class DatabaseInterface:
 
     def isUserWithLoginInDB(self, login) -> bool:
         pass
-    
+
     def getServicesForLocation(self, locationId):
         pass
-    
+
+    def getActiveReservation(self, userId) -> Reservation:
+        pass
+
+    def getActiveRentalOfTheUser(self, userId) -> Rental:
+        pass
