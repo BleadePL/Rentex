@@ -20,7 +20,7 @@ USERNAME = "polrentex"
 PASSWORD = "rentex123"
 DB_NAME = "Rentex"
 
-engine = sqlalchemy.create_engine('mysql://' + USERNAME + ':' + PASSWORD + '@' + HOSTNAME + ':' + PORT + '/' + DB_NAME,
+engine = sqlalchemy.create_engine('mysql+mysqlconnector://' + USERNAME + ':' + PASSWORD + '@' + HOSTNAME + ':' + PORT + '/' + DB_NAME,
                                   echo=True)
 
 class SQLAlchemyInterface(DatabaseInterface):
@@ -268,7 +268,7 @@ class SQLAlchemyInterface(DatabaseInterface):
                 return None
             if session.query(Rental).filter(and_(
                     Rental.clientId == reservation.clientId,
-                    Rental.ended
+                    not Rental.ended
             )).first():
                 return None
             try:
@@ -327,7 +327,8 @@ class SQLAlchemyInterface(DatabaseInterface):
             if user_reservation:
                 if user_reservation.carId != carId:
                     return None
-                self.endReservation(user_reservation)  # TODO: end reservation here
+                user_reservation.reservationEnd = datetime.datetime.now()
+                session.bulk_save_objects([user_reservation])
             try:
                 rental = Rental(rentalStart=datetime.datetime.now(), mileage=0, carId=carId, clientId=userId,
                                 ended=False)
@@ -336,7 +337,6 @@ class SQLAlchemyInterface(DatabaseInterface):
                 session.refresh(rental)
                 return rental.rentalId
             except Exception as e:
-                print(e)
                 session.rollback()
                 return None
 
@@ -580,7 +580,8 @@ class SQLAlchemyInterface(DatabaseInterface):
         session: sqlalchemy.orm.Session
         with self.createSession() as session:
             return session.query(Reservation).filter(Reservation.clientId == userId,
-                                                     Reservation.reservationEnd is None).first()
+                                                    Reservation.reservationStart < datetime.datetime.now(),
+                                                    Reservation.reservationEnd > datetime.datetime.now()).first()
 
     def getActiveRentalOfTheUser(self, userId) -> Rental:
         session: sqlalchemy.orm.Session

@@ -1,18 +1,23 @@
-import secrets
-import threading
-import time
-from datetime import datetime
-from typing import Optional
+try:
+    import secrets
+    import threading
+    import time
+    from datetime import datetime
+    from datetime import timedelta
 
-from flask import Flask, Response
-from flask_login import LoginManager
+    from typing import Optional
 
-from database_access import RENTAL_DB
-from classes import Rental, Car, Reservation, CreditCard
-from flask_cors import CORS
-import schedule
+    from flask import Flask, Response
+    from flask_login import LoginManager
 
-TESTS = True
+    from database_access import RENTAL_DB
+    from classes import Rental, Car, Reservation, CreditCard
+    from flask_cors import CORS
+    import schedule
+except Exception as e:
+    print()
+
+TESTS = False
 
 
 class LoggedInUser:
@@ -145,7 +150,7 @@ class RentalReservationTimerTask:
             return False
 
     def startReservation(self, car_id, user_id) -> Optional[str]:
-        r = Reservation(carId=car_id, clientId=user_id, reservationStart=datetime.now())
+        r = Reservation(carId=car_id, clientId=user_id, reservationStart=datetime.now(), reservationEnd=datetime.now() + timedelta(minutes=5))
         res_id = RENTAL_DB.startReservation(r)
         if res_id is None:
             return None
