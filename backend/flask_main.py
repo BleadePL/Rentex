@@ -72,7 +72,7 @@ class PendingRental:
         self.lastLong = currentLong
 
     def calculate_current_cost(self) -> int:
-        timeCost = (int(time.time()) - self.rent.rentalStart.timestamp()) * self.timeCost
+        timeCost = (int(time.time()) - self.rent.rentalStart.timestamp()) * (float(self.timeCost) / 60.0)
         return int(int(self.activationCost + timeCost + (
                 self.distance / 1000) * self.kmCost)) + (TOO_LONG_RENTAL_PUNISHMENT if self.overtime else 0)
 
