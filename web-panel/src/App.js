@@ -113,10 +113,17 @@ function App() {
                     api.getNearestCars('51.11035800', '17.02671100', 100000, setCar, console.log, console.log)
                     navigate("/browse-cars")}}>Browse available cars</button></li>
                   <li><button name="reserved-car" onClick={() => {
-                    api.getUserReservation(setReservation, () => console.log, () => console.log())
+                    api.getUserReservation(setReservation, () => {{
+                      console.log("xx");
+                      setReservation(undefined);
+                    }}, () => console.log())
                     navigate("/browse-reservation")}}>Reserved car</button></li>
                   <li><button name="rented-car" onClick={() => {
-                    api.getUserRental(setRented, () => console.log, () => console.log())
+                    api.getUserRental(setRented, () => {
+                      console.log("xx");
+                      setRented(undefined);
+                    }, () => 
+                      console.log("xx"))
                     navigate("/browse-rental");}
                     }>Rented car</button></li>
                   <li><button name="persona-data" onClick={() => navigate("/userDescr")}>User Description</button></li>

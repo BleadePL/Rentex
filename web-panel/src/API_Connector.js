@@ -1084,6 +1084,7 @@ class API_Session{
             }
 
         }).then(data => {
+            console.log(data)
             if(data === "BR"){
                 failure()
             }

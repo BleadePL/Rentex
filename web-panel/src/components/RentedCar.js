@@ -20,6 +20,7 @@ function RentedCar({Api, rental, appManagment, children}){
         }
     if (rental != undefined){
         rental = rental.rental}
+    console.log(rental)
 
     if(rental == undefined) return(<div>Brak wypozyczenia</div>)
 

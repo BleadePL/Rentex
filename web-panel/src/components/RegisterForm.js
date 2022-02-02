@@ -2,14 +2,14 @@ import React, {useState} from "react";
 import '../App.css'
 
 function RegisterForm({api, Register}){
-    const [details, setDetails] = useState({name: "", surname: "", login: "", password: "", address: "", email: "", pesel: ""});
+    const [details, setDetails] = useState({name: "", surname: "", login: "", password: "", email: "", pesel: ""});
     const [error, setError] = useState()
 
 
     const submitHandler = e =>{
         e.preventDefault();
         api.register(details.name, details.surname, details.gender, details.login, details.password, details.address, details.email, details.pesel,
-            () => setError("Incorrect Data"), () => setError("Auth err"))
+            () => setError("Success"), () => setError("Auth err"))
         }
     
     return (
@@ -40,11 +40,6 @@ function RegisterForm({api, Register}){
                     <label htmlFor="password">Gender: </label>
                     <input type="password" name="password" id="password" onChange={e => setDetails({...details, gender: e.target.value})} value={details.gender}/>
                 </div>
-                <div className="form-group">
-                        <label htmlFor="name">Address: </label>
-                        <input type="address" name="address" id="address" onChange={e => setDetails({...details, address: e.target.value})} value={details.address}/>
-                </div>
-
                 <div className="form-group">
                     <label htmlFor="email">Email: </label>
                     <input type="email" name="email" id="email" onChange={e => setDetails({...details, email: e.target.value})} value={details.email}/>
